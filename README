@@ -1,4 +1,4 @@
-calibrig - compute affine deformation of 2 video streams.
+calibrig - compute affine deformation between two video streams.
 
 Copyright (C) 2010-2011 Cyril Pichard
 cyril dot pichard at gmail dot com
