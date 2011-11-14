@@ -1,0 +1,30 @@
+calibrig TODO file
+
+== Features ==
+* make an hydrid StereoAnalyser cpu extraction+gpu matching
+* add a scripting langage
+* write a "modular" compute engine aka gstreamer like
+* handle sdi disconnections properly
+* GPU mode : matched points in green
+
+== non annoying bugs ==
+* when the window is closed with the window manager, the desallocation isn't done
+  correctly
+
+== Code quality ==
+* check memory read/write valgrind
+* find a tool check gpu memory read/write + leaks cuda-memcheck cuda-gdb ?
+* remove dead code, there are a lot of dead code in the nvSDI files
+* some includes are not needed, remove them
+* in ImageGL, check if we really need buffer+texture
+* do not allocate results with new. Use a circular buffer for example
+
+== Refactoring ==
+* improve command system
+* use command pattern for the ui as well
+** change page with a command
+* look at ghost interface
+* create a class for X11 screen
+* extract code from irrelevant files
+* get replace surfgpu code
+* clean all gl code
