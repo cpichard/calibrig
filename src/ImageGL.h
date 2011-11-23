@@ -169,16 +169,29 @@ template<typename ImageType, typename SizeType >
 inline void SetSize( ImageType &size, SizeType newValue )
 { size.m_size = newValue; }
 
+template<>
+inline void SetSize( UInt2 &s, UInt2 newSize){ s = newSize;}
+
 template<typename ImageType>
 inline unsigned int & Width ( ImageType &t ){ return Width( Size(t) ); }
 
 template<typename ImageType>
 inline unsigned int & Height( ImageType &t ){ return Height( Size(t) ); }
 
+
+template<typename ImageType>
+inline void  SetWidth( ImageType &t, unsigned int w ){t.m_size.m_x = w;}
+
+template<typename ImageType>
+inline void  SetHeight( ImageType &t, unsigned int h ){t.m_size.m_y = h;}
+
 inline GLuint & TexId( ImageGL &t ){ return t.m_texId; }
 
 template< typename BufferType>
-inline GLuint & BufId( BufferType &t ){ return t.bufId(); }
+inline GLuint & BufId( BufferType &t ){ return t.m_bufId; }
+
+template< typename BufferType>
+inline void SetBufId( BufferType &t, GLuint bufId ){ t.m_bufId = bufId; }
 
 template<typename TextureType>
 inline bool HasTexture( const TextureType &t ) { return t.TexId() != 0; }
@@ -192,7 +205,6 @@ inline const GLuint & TexId( const TextureType &t ) { return t.TexId(); }
 
 template<typename BufferType>
 inline const GLuint & BufId( const BufferType &t ) { return t.bufId(); }
-
 
 
 

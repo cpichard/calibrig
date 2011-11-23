@@ -12,6 +12,8 @@
 
 #include "Grabber.h"
 
+#include <iostream>
+
 Grabber::Grabber( Display *dpy, HGPUNV *gpu, GLXContext ctx )
 :m_dpy(dpy), 
 m_gpu(gpu),
@@ -51,6 +53,9 @@ void Grabber::shutdown()
 // State from OFFLINE to CAPTURE_STARTED
 bool Grabber::init()
 {
+
+    std::cout << "init grabber" << std::endl;
+
     // if the card has already be initialized
     if( m_state != OFFLINE )
         return true;
@@ -62,9 +67,11 @@ bool Grabber::init()
         return false;
     }
     m_state = CARD_INITIALIZED;
+    std::cout << "card initialized" << std::endl;
 
     if( m_card.initInputDeviceGL() )
     {
+        std::cout << "initInputDeviceGL OK" << std::endl;
         setupCardGL();
 
         //
@@ -77,6 +84,7 @@ bool Grabber::init()
         //
         bool captureStarted = m_card.startCapture();
 
+        std::cout << "starting capture" << std::endl;
         if( captureStarted == false )
         {
             m_numFails = 1000;
@@ -163,24 +171,22 @@ void Grabber::selectStreams()
     switch( m_card.getNumStreams() )
     {
         case 0:
-            Width(m_videoSize) = 0;
-            Height(m_videoSize) = 0;
+            m_videoSize = ZeroUInt2;
         break;
         default:
-            Width(m_videoSize) = m_card.getWidth();
-            Height(m_videoSize) = m_card.getHeight();
+            SetWidth(m_videoSize, m_card.getWidth());
+            SetHeight(m_videoSize, m_card.getHeight());
         break;
     }
 
     // Select stream input
-
-    BufId(m_stream1CaptureHandle) = m_card.getBufferObjectHandle(0);
-    Size(m_stream1CaptureHandle) = m_videoSize;
+    SetBufId(m_stream1CaptureHandle, m_card.getBufferObjectHandle(0));
+    SetSize(m_stream1CaptureHandle, m_videoSize);
     m_stream2CaptureHandle = m_stream1CaptureHandle;
     if( m_card.getNumStreams() >= 2 )
     {
-        BufId(m_stream2CaptureHandle) = m_card.getBufferObjectHandle(1);
-        Size(m_stream2CaptureHandle) = m_videoSize;
+        SetBufId(m_stream2CaptureHandle, m_card.getBufferObjectHandle(1));
+        SetSize(m_stream2CaptureHandle, m_videoSize);
     }
 }
 
@@ -238,7 +244,7 @@ bool Grabber::captureVideo()
         // TODO Release card buffer;
         // Change values
         // Change configuration
-        m_videoSize = UInt2(0,0);
+        m_videoSize = ZeroUInt2;
 
         // Stop capture
         m_card.endCapture();

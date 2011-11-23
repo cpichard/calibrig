@@ -34,6 +34,9 @@ inline unsigned int & Height( UInt2 &s ){ return s.m_y; }
 inline const unsigned int & Width( const UInt2 &s ){ return s.m_x; }
 inline const unsigned int & Height( const UInt2 &s ){ return s.m_y; }
 
+inline void SetWidth( UInt2 &s, unsigned int w ){ s.m_x=w; }
+inline void SetHeight( UInt2 &s, unsigned int h ){ s.m_y=h; }
+
 
 inline
 bool operator != ( const UInt2 &a, const UInt2 &b )
