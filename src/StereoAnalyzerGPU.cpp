@@ -26,16 +26,20 @@ StereoAnalyzerGPU::~StereoAnalyzerGPU()
 
 void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
 {
+    m_imgMutex.lock();
     convertYCbYCrToY( videoPBO, m_imgRight );
     m_rightImageIsNew = true;
+    m_imgMutex.unlock();
     computeSurfDescriptors( m_imgRight, m_rightDescriptors );
     collectPoints( m_rightDescriptors, m_rightPoints, Size(m_imgRight) );
 }
 
 void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
 {
+    m_imgMutex.lock();
     convertYCbYCrToY( videoPBO, m_imgLeft );
     m_leftImageIsNew = true;
+    m_imgMutex.unlock();
     computeSurfDescriptors( m_imgLeft, m_leftDescriptors );
     collectPoints( m_leftDescriptors, m_leftPoints, Size(m_imgLeft) );
 }

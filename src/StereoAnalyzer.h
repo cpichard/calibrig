@@ -39,7 +39,7 @@ public:
     virtual void analyse()=0;
 
 
-    inline bool imagesAreNew() const { return m_leftImageIsNew && m_rightImageIsNew; }
+    inline bool imagesAreNew() { boost::mutex::scoped_lock sl(m_imgMutex); return m_leftImageIsNew && m_rightImageIsNew; }
 
     virtual ComputationData * acquireLastResult() = 0; 
 
@@ -61,7 +61,7 @@ protected:
     
     //
     boost::mutex m_mutex;
-
+    boost::mutex m_imgMutex;
 };
 
 #endif//__STEREOANALYZER_H__

@@ -60,12 +60,12 @@ StereoAnalyzerCPU::~StereoAnalyzerCPU()
 
 void StereoAnalyzerCPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
 {
-    updateImageWithSDIVideo(videoPBO, m_imgRight); m_rightImageIsNew = true;
+    boost::mutex::scoped_lock sl(m_imgMutex);updateImageWithSDIVideo(videoPBO, m_imgRight); m_rightImageIsNew = true;
 }
 
 void StereoAnalyzerCPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
 {
-    updateImageWithSDIVideo(videoPBO, m_imgLeft ); m_leftImageIsNew = true;
+    boost::mutex::scoped_lock sl(m_imgMutex);updateImageWithSDIVideo(videoPBO, m_imgLeft ); m_leftImageIsNew = true;
 }
 
 void StereoAnalyzerCPU::resizeImages( UInt2 imgSize )
