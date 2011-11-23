@@ -578,6 +578,7 @@ GLboolean CNvSDIin::initInputDeviceGL()
 			     NV_CTRL_STRING_OPERATION_GVI_CONFIGURE_STREAMS,
 			     instr, &outstr)) {
 		fprintf(stderr, "Error configuring input jacks as specified streams\n");
+        return GL_FALSE;
   } else {
 		fprintf(stderr, "Jack configuration successful\n");
   }
@@ -670,7 +671,7 @@ GLboolean CNvSDIin::initInputDeviceGL()
 		decodeBitsPerComponent(value));
 
   } // for numStreams
-
+    return GL_TRUE;
 }
 
 #if defined __cplusplus
