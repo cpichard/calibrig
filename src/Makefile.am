@@ -1,7 +1,7 @@
 NVCC = nvcc
 SUFFIXES = .cu
 .cu.$(OBJEXT):
-	$(NVCC) -g -G -Xcompiler -DBOOST_UNORDERED_NO_HAS_MOVE_ASSIGN -arch=sm_20 -I./ @BOOST_CFLAGS@ @OpenCV_CFLAGS@ @CUDATOOLKIT_CFLAGS@ @CUDPPTOOLKIT_CFLAGS@ -c -o  $@ $<
+	$(NVCC) -g -G -Xcompiler -DBOOST_UNORDERED_NO_HAS_MOVE_ASSIGN -arch=sm_23 -I./ @BOOST_CFLAGS@ @OpenCV_CFLAGS@ @CUDATOOLKIT_CFLAGS@ @CUDPPTOOLKIT_CFLAGS@ -c -o  $@ $<
 
 AM_CPPFLAGS = -g @SDI_CFLAGS@ @OpenCV_CFLAGS@ @CUDA_CFLAGS@ @CUDATOOLKIT_CFLAGS@ @CUDPPTOOLKIT_CFLAGS@ @BOOST_CFLAGS@ -DGL_GLEXT_PROTOTYPES -DGLX_GLXEXT_PROTOTYPES
 
@@ -59,7 +59,4 @@ SurfMatchingExperimental.h\
 SurfMatchingExperimental.cu\
 HistogramScreen.h\
 HistogramScreen.cpp
-
-EXTRA_calibrig_SOURCES = \
-process.cu
 

@@ -17,6 +17,8 @@ StereoAnalyzer::StereoAnalyzer( unsigned int nbChannelsInSDIVideo )
     ,   m_nbChannelsInSDIVideo(nbChannelsInSDIVideo)
     ,   m_leftImageIsNew(false)
     ,   m_rightImageIsNew(false)
+    ,   m_mutex()
+    ,   m_imgMutex()
 {
 }
 

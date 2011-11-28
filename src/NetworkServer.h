@@ -82,7 +82,7 @@ public:
             std::string msgReceived;
             std::getline( is, msgReceived);
 
-            std::cout << msgReceived << std::endl;
+            //std::cout << msgReceived << std::endl;
             if( msgReceived.find("GETR") != string::npos )
             {
                 //std::cout << "Find GETR" << std::endl;
@@ -147,7 +147,7 @@ public:
         else
         {
             // todo close connection properly
-            std::cout << "error" << std::endl;
+            std::cout << "error in NetworkServer.h" << std::endl;
         }
     }
 

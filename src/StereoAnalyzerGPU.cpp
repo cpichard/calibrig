@@ -48,9 +48,8 @@ void StereoAnalyzerGPU::acceptCommand( const Command &command )
 {
     if( command.m_action == "OCVTHRESHOLD" )
     {
-        // TODO
-        // value 0 to 100
-        //m_surfThreshold = command.m_value;// < 0 ? 10 : ( (command.m_value > 100 ) ? 10000 : command.m_value * 100);
+        // Still TODO normalise value 0 to 100
+        m_hessianData.m_thres = ((float)command.m_value)/100000.f;
     }
     if( command.m_action == "HISTOGRAMRANGE")
     {

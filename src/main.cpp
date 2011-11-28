@@ -46,7 +46,7 @@
 
 int main(int argc, char *argv[])
 {
-    std::cout << "calibrig v15092011 - cpu + gpu beta" << std::endl;
+    std::cout << "calibrig v28112011 - cpu + gpu beta" << std::endl;
     std::cout << "Copyright (C) 2010-2011  C. Pichard"<< std::endl;
     std::cout << "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl;
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
@@ -188,6 +188,8 @@ int main(int argc, char *argv[])
 
     // TODO : fill matrix and add matrix to warp function
     float matrix[9];
+    float *d_matrix; // device matrix
+    cudaMalloc((void**)&d_matrix, sizeof(float)*9);
 #endif
     
     // Create an analyzer
@@ -325,7 +327,12 @@ int main(int argc, char *argv[])
 
 #if TEST            // Transform image for tests
                     convertYCbYCrToY( grabber.stream2(), m_YTmp );
-                    warpImage(m_YTmp, m_warpedYTmp, matrix );
+                    matrix[0] = rand()%10*5;
+                    matrix[1] = rand()%10*6;
+                    matrix[2] = (rand()%10)*2.f/10.f;
+                    //std::cout << "matrix = " << matrix[0] << std::endl;
+                    cudaMemcpy(d_matrix, matrix, sizeof(float)*9, cudaMemcpyHostToDevice);
+                    warpImage(m_YTmp, m_warpedYTmp, d_matrix );
                     convertYToYCbYCr(m_warpedYTmp,m_YTmp);
                     analyzer->updateRightImageWithSDIVideo (m_YTmp);
 #else

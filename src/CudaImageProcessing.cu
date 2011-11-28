@@ -21,10 +21,10 @@ int iDivUp(int a, int b)
 #	define IMUL(a, b) (a)*(b)
 #endif
 
-
 // TODO deformation
+// At the moment this function is only used for testing
 __global__
-void warpImage( uchar4 *d_dst, int imageW, int imageH, float *matrix )
+void warpImage( uchar4 *d_dst, int imageW, int imageH, float matrix[9] )
 {
     // Position in dest image
     const int ix = blockDim.x * blockIdx.x + threadIdx.x;
@@ -36,9 +36,16 @@ void warpImage( uchar4 *d_dst, int imageW, int imageH, float *matrix )
 
         // Warp is only used for TESTING purposes
         unsigned int pos = ix + iy*imageW;
-        float tu = ix+50;//float(ix)*cos(0.1) - float(iy)*sin(0.1) +10;
-        float tv = iy-10;//float(ix)*sin(0.1) + float(iy)*cos(0.1);
-        d_dst[ pos ] = tex2D( tex, tu, tv );
+        
+        float tu = ix+matrix[0];//float(ix)*cos(0.1) - float(iy)*sin(0.1) +10;
+        float tv = iy+matrix[1];//float(ix)*sin(0.1) + float(iy)*cos(0.1);
+        uchar4 col =  tex2D( tex, tu, tv ); 
+        const float R = (float)col.x*matrix[2];
+        const float G = (float)col.y*matrix[2];
+        const float B = (float)col.z*matrix[2];
+        d_dst[ pos ].x = (unsigned char)( R > 0 ) ? ( ( R <=255 ) ? R : 255 ): 0 ;
+        d_dst[ pos ].y = (unsigned char)( G > 0 ) ? ( ( G <=255 ) ? G : 255 ): 0 ;
+        d_dst[ pos ].z = (unsigned char)( B > 0 ) ? ( ( B <=255 ) ? B : 255 ): 0 ;
     }
 }
 
@@ -69,17 +76,18 @@ void diffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int ima
     }
 }
 
+#include <stdio.h>
 // Convert 422 ycbycr to rgb
 __global__
 void
 YCbYCrToRGBA(
     uchar4 *dst,
     uchar4 *src,
-    int imageW,
-    int imageH
+    int imageW, //960
+    int imageH  //1080
 )
 {
-    // Position in dest image
+    // Position in src image (960,1080)
     const int ix = blockDim.x * blockIdx.x + threadIdx.x;
     const int iy = blockDim.y * blockIdx.y + threadIdx.y;
 
@@ -106,10 +114,12 @@ YCbYCrToRGBA(
         dst[ posPix1 ].x = (unsigned char)( R1 > 0 ) ? ( ( R1 <=255 ) ? R1 : 255 ): 0 ;
         dst[ posPix1 ].y = (unsigned char)( G1 > 0 ) ? ( ( G1 <=255 ) ? G1 : 255 ): 0 ;
         dst[ posPix1 ].z = (unsigned char)( B1 > 0 ) ? ( ( B1 <=255 ) ? B1 : 255 ): 0 ;
+        dst[ posPix1 ].w = 0;
 
         dst[ posPix2 ].x = (unsigned char)( R2 > 0 ) ? ( ( R2 <=255 ) ? R2 : 255 ): 0 ;
         dst[ posPix2 ].y = (unsigned char)( G2 > 0 ) ? ( ( G2 <=255 ) ? G2 : 255 ): 0 ;
         dst[ posPix2 ].z = (unsigned char)( B2 > 0 ) ? ( ( B2 <=255 ) ? B2 : 255 ): 0 ;
+        dst[ posPix2 ].w = 0;
     }
 }
 
@@ -286,7 +296,7 @@ RGBAtoFloat(
     // Position in src image
     if(ix < imageW && iy < imageH )
     {
-        const unsigned int position = pitch * iy + ix;
+        const unsigned int position = imageW * iy + ix;
 
         const float col = d_src[position].x;
         dst[position] = col/255.0;
@@ -388,13 +398,13 @@ transpose(
 	}
 }
 
-
+#include <stdio.h>
 extern "C" void
 cudaYCbYCrToRGBA( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH)
 {
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW/2, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
-
+    
     YCbYCrToRGBA<<<grid, threads>>>( d_dst, d_src, imageW/2, imageH );
     cudaThreadSynchronize();
 }

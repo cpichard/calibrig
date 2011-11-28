@@ -101,6 +101,7 @@ AC_SUBST([TBB_LIBS])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
+	tests/debug-cuda/Makefile
 	])
 
 # Checks for libraries.
