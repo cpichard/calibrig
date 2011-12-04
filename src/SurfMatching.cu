@@ -20,14 +20,18 @@ void computeSSD( SurfDescriptorPoint *leftDesc, SurfDescriptorPoint *rightDesc, 
     if( leftIndex >= nbLeft || rightIndex >= nbRight)
         return;
     
-    float *ldesc = leftDesc[leftIndex].m_descriptor;
-    float *rdesc = rightDesc[rightIndex].m_descriptor;
+    // Due to the way SurfDescriptor is structured, 
+    // the memory isn't read efficiently
+    float * const ldesc = leftDesc[leftIndex].m_descriptor;
+    float * const rdesc = rightDesc[rightIndex].m_descriptor;
 
-    double sumSquareDiff = 0;
-    #pragma unroll 8
+    float sumSquareDiff = 0;
+    #pragma unroll 64
     for( unsigned int i=0; i<64; i++ )
     {
-        sumSquareDiff += (ldesc[i]-rdesc[i])*(ldesc[i]-rdesc[i]);
+        const float l = ldesc[i];
+        const float r = rdesc[i];
+        sumSquareDiff += (l-r)*(l-r); 
     }
 
     const unsigned int pos = leftIndex + rightIndex*nbLeft;
@@ -50,6 +54,10 @@ void selectKernel( float* ssdImage, uint nbLeftDesc, uint nbRightDesc,
     float ssd;
     uint rBest=0;
     uint pos = rightIndex*nbLeftDesc; // beginning of values
+    
+    // NOTE that if there is more left desc that right desc
+    // the number of total matches could be wrong 
+    // with this method
     for(unsigned int i = 0; i < nbLeftDesc; i++ )
     {
         ssd = ssdImage[pos];
@@ -103,7 +111,7 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
 
     // Launch comparison kernel
     // Compute ssd between all descriptors
-    const unsigned int threadSize = 8;
+    const unsigned int threadSize = 16;
     dim3 threads(threadSize,threadSize);
     dim3 grid( iDivUp( nbLeftDesc, threadSize ), iDivUp( nbRightDesc, threadSize ) );
     computeSSD<<<grid, threads>>>( leftDesc.m_descPoints, rightDesc.m_descPoints, nbLeftDesc, nbRightDesc, (float*)ssdImage );
@@ -135,38 +143,6 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     // Disambiguation of matches
     unsigned int nbMatchedPoints = 0;
     copyPoints( leftPts, rightPts, nbRightDesc, matchedPoints_h, nbMatchedPoints  );
-//    MatchedPointSet matchedPointSet;
-//    std::pair<MatchedPointSet::iterator,bool> insertOk;
-//    for( unsigned int i=0; i < nbRightDesc; i++ )
-//    {
-//        if( matchedPoints_h[i].m_ratio < 0.6 )
-//        {
-//            boost::hash<MatchedPoints> hasher;
-//            std::size_t key = hasher(matchedPoints_h[i]);
-//
-//            insertOk = matchedPointSet.insert( std::make_pair(key,matchedPoints_h[i] ) );
-//            if( insertOk.second == false )
-//            {
-//                if( (*insertOk.first).second.m_ratio > matchedPoints_h[i].m_ratio )
-//                {
-//                    matchedPointSet.erase(insertOk.first);
-//                    matchedPointSet.insert( std::make_pair(key,matchedPoints_h[i] )  );
-//                }
-//            }
-//        }
-//    }
-//
-//    // copy results in pt1 and pt2
-//    unsigned int nbMatchedPoints = matchedPointSet.size();
-//    MatchedPointSet::iterator it = matchedPointSet.begin();
-//    //std::cout << "Matched points = " << matchedPoints << std::endl;
-//    for( unsigned int i=0; i < nbMatchedPoints; i++, ++it )
-//    {
-//        leftPts[i].x = it->second.m_lx;
-//        leftPts[i].y = it->second.m_ly;
-//        rightPts[i].x = it->second.m_rx;
-//        rightPts[i].y = it->second.m_ry;
-//    }
 
     // Resize to numbers of found values
     leftPts.resize(nbMatchedPoints);

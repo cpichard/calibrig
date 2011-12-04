@@ -15,18 +15,18 @@ void copyPoints( vector<CvPoint2D32f> &leftPts, vector<CvPoint2D32f> &rightPts, 
 	{
 	    if( matchedPoints_h[i].m_ratio < 0.6 )
 	    {
-		boost::hash<MatchedPoints> hasher;
-		std::size_t key = hasher(matchedPoints_h[i]);
+            boost::hash<MatchedPoints> hasher;
+            std::size_t key = hasher(matchedPoints_h[i]);
 
-		insertOk = matchedPointSet.insert( std::make_pair(key,matchedPoints_h[i] ) );
-		if( insertOk.second == false )
-		{
-		    if( (*insertOk.first).second.m_ratio > matchedPoints_h[i].m_ratio )
-		    {
-			matchedPointSet.erase(insertOk.first);
-			matchedPointSet.insert( std::make_pair(key,matchedPoints_h[i] )  );
-		    }
-		}
+            insertOk = matchedPointSet.insert( std::make_pair(key,matchedPoints_h[i] ) );
+            if( insertOk.second == false )
+            {
+                if( (*insertOk.first).second.m_ratio > matchedPoints_h[i].m_ratio )
+                {
+                    matchedPointSet.erase(insertOk.first);
+                    matchedPointSet.insert( std::make_pair(key,matchedPoints_h[i] )  );
+                }
+            }
 	    }
 	}
 

@@ -4,8 +4,13 @@
 #include "SurfHessian.h"
 
 // Ipoint struct for CUDA implementation of SURF descriptor computation.
-typedef struct
+// TODO : remove m_descriptor from this structure, and have a single array with 
+// all descriptor. The computeSSD cannot read the memory coalesced with this structure. 
+typedef struct 
 {
+    //! Vector of descriptor components
+    float m_descriptor[64];
+    
     //! Coordinates of the detected interest point
     float m_x;
     float m_y;
@@ -18,9 +23,6 @@ typedef struct
 
     //! Sign of laplacian for fast matching purposes
     int m_laplacian;
-
-    //! Vector of descriptor components
-    float m_descriptor[64];
 
     //! Length of the partial descriptor vector for each 4x4 subsquare
     float m_lengths[4][4];
@@ -43,8 +45,6 @@ struct DescriptorData
     //! Device memory containing interest points
     SurfDescriptorPoint *m_descPoints;
     size_t              m_nbIPoints;
-
-
 };
 
 bool computeDescriptors( CudaImageBuffer<float> &imgSat, DescriptorData & );
