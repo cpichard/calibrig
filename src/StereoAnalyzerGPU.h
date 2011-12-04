@@ -54,6 +54,7 @@ private:
     boost::mutex                m_matchMutex;
     ComputationDataGPU *        m_result;
     int                         m_histoRange;
+    float                       m_sentThreshold;
 };
 
 #endif // __STEREOANALYSERGPU_H__

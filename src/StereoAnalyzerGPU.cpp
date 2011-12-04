@@ -12,7 +12,13 @@
 #include "ImageProcessing.h"
 
 StereoAnalyzerGPU::StereoAnalyzerGPU()
-:StereoAnalyzer(), m_hessianData(), m_rightDescriptors(), m_leftDescriptors(), m_result(NULL), m_histoRange(20)
+: StereoAnalyzer()
+, m_hessianData()
+, m_rightDescriptors()
+, m_leftDescriptors()
+, m_result(NULL)
+, m_histoRange(20)
+, m_sentThreshold(500)
 {}
 
 StereoAnalyzerGPU::~StereoAnalyzerGPU()
@@ -49,6 +55,7 @@ void StereoAnalyzerGPU::acceptCommand( const Command &command )
     if( command.m_action == "OCVTHRESHOLD" )
     {
         // Still TODO normalise value 0 to 100
+        m_sentThreshold = (float)command.m_value;
         m_hessianData.m_thres = ((float)command.m_value)/100000.f;
     }
     if( command.m_action == "HISTOGRAMRANGE")
@@ -128,6 +135,7 @@ void StereoAnalyzerGPU::analyse()
             
             m_result->m_leftMatchedPts = m_leftMatchedPts;
             m_result->m_rightMatchedPts = m_rightMatchedPts;
+            m_result->m_thresholdUsed = m_sentThreshold; 
         }
     }
     m_matchMutex.unlock();

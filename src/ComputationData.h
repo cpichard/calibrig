@@ -11,7 +11,10 @@
 class ComputationData
 {
 public:
-    ComputationData(){}
+    ComputationData()
+    :m_thresholdUsed(0)
+    {}
+
     virtual ~ComputationData(){}
 
     // Computation data knows how to update a monitor
@@ -24,8 +27,13 @@ public:
     virtual void drawVerticalDisparity(){};
     virtual void drawHorizontalDisparity(){};
 
+    virtual void drawInfos(){}; // TODO draw infos CPU/GPU
+
     // Deformation found
     Deformation m_d;
+
+    // Analysis infos;
+    float m_thresholdUsed;
 
     // Graphic value for histogram size
     // it shouldn't be here, shouldn't it ?

@@ -27,16 +27,16 @@ void printMat( std::string T, CvMat *H, int r, int c )
 
 // Constructor
 StereoAnalyzerCPU::StereoAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
-:StereoAnalyzer( nbChannelsInSDIVideo ),
-m_imgWidth(0),
-m_imgHeight(0),
-m_surfThreshold(500),
-m_imgRight(NULL),
-m_imgLeft(NULL),
-m_imgTmp(NULL),
-m_tmpBuf(0),
-m_warpMatrix(NULL),
-m_result(NULL)
+:StereoAnalyzer( nbChannelsInSDIVideo )
+, m_imgWidth(0)
+, m_imgHeight(0)
+, m_surfThreshold(500)
+, m_imgRight(NULL)
+, m_imgLeft(NULL)
+, m_imgTmp(NULL)
+, m_tmpBuf(0)
+, m_warpMatrix(NULL)
+, m_result(NULL)
 {
     m_warpMatrix = cvCreateMat(2,3,CV_64FC1);
     m_toNormMatrix = cvCreateMat(3,3,CV_64FC1);
@@ -450,7 +450,7 @@ void StereoAnalyzerCPU::analyse()
         d.m_nbPtsRight = resultTmp->m_rightKeypoints->total;
         d.m_nbPtsLeft = resultTmp->m_leftKeypoints->total;
         d.m_nbMatches = resultTmp->m_ptpairs.size()/2;
-
+        resultTmp->m_thresholdUsed = m_surfThreshold;
         resultTmp->setRightImage( m_imgRight);
         resultTmp->setLeftImage ( m_imgLeft );
 

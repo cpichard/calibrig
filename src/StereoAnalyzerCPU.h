@@ -41,18 +41,16 @@ public:
     // TESTING PURPOSE
     void setTransform(float tx, float ty, float scale, float rot );
 
-
-
 private:
     void updateImageWithSDIVideo( ImageGL &videoPBO, IplImage * );
     //void saveImage ( IplImage *img, const std::string &filename );
     
     // Image size
-     unsigned int m_imgWidth;
-     unsigned int m_imgHeight;
+    unsigned int m_imgWidth;
+    unsigned int m_imgHeight;
 
     // Threshold for surf extraction
-     unsigned int m_surfThreshold;
+    unsigned int m_surfThreshold;
     
     // below variables In computation data instead ???
     //

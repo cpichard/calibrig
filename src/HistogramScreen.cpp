@@ -60,7 +60,6 @@ void HistogramScreen::draw()
         glVertex3f(mid,1.0,0);
         glEnd();
 
-       
         // Horizontal disparity
         glLoadIdentity();
         glScalef( 0.5, 0.5, 0);
@@ -75,6 +74,14 @@ void HistogramScreen::draw()
         glVertex3f(mid,1.0,0);
         glEnd();
     }
+    
+    // Current threshold value
+    glLoadIdentity();
+    glTranslatef( 0.2, 0.75, 0 );
+    std::stringstream threshold;
+    threshold << "Threshold : " << m_analysisResult->m_thresholdUsed; 
+    glColor4f(0.95, 0.97, 0.95, 0.0f);
+    drawText(0.0, 0.0, threshold.str());    
 }
 
 void HistogramScreen::resizeImage( UInt2 &imgSize )
