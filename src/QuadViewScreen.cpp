@@ -67,7 +67,7 @@ void QuadViewScreen::draw()
     glScalef( 0.5, 0.5, 0);
     glTranslatef( 1, -1, 0 );
     m_mon4.drawGL();
-    drawText(-0.95, 0.80, "Monitor 4 - Left" );
+    drawText(-0.95, 0.80, "Monitor 4 - Right" );
 
     if( m_analysisResult )
     {
