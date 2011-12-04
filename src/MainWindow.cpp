@@ -110,9 +110,18 @@ Window createMainWindow( Display *dpy, GLXContext &ctx, int xscreen, unsigned in
     swa.colormap = cmap;
     swa.border_pixel = 0;
     swa.background_pixel = 1;
-    swa.event_mask = ExposureMask | StructureNotifyMask | KeyPressMask |
-    KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
-    PointerMotionMask;
+    swa.override_redirect = true;
+    swa.event_mask  = ExposureMask 
+                    | StructureNotifyMask 
+                    | SubstructureNotifyMask
+                    | KeyPressMask 
+                    | KeyReleaseMask 
+                    | ButtonPressMask 
+                    | ButtonReleaseMask 
+                    | PointerMotionMask 
+                    | PropertyChangeMask
+                    | ClientMessage;
+
     mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
     Window win = XCreateWindow(dpy, RootWindow(dpy, vi->screen),
     0, 0, windowWidth, windowHeight, 0,
@@ -121,7 +130,7 @@ Window createMainWindow( Display *dpy, GLXContext &ctx, int xscreen, unsigned in
 
     // Map window.
     XMapWindow(dpy, win);
-    XIfEvent(dpy, &event, WaitForNotify, (char *) win);
+    //XIfEvent(dpy, &event, WaitForNotify, (char *) win);
 
     // Set window colormap.
     XSetWMColormapWindows(dpy, win, &win, 1);

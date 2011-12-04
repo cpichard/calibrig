@@ -46,7 +46,7 @@
 
 int main(int argc, char *argv[])
 {
-    std::cout << "calibrig v28112011 - cpu + gpu beta" << std::endl;
+    std::cout << "calibrig v04122011 - cpu + gpu beta" << std::endl;
     std::cout << "Copyright (C) 2010-2011  C. Pichard"<< std::endl;
     std::cout << "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl;
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
         SUCCESS_INFO( "System checked" );
     }
 
+
     // Scan the systems for GPUs
     HGPUNV gpuList[MAX_GPUS];
     int	num_gpus = ScanHW( dpy, gpuList );
@@ -149,6 +150,10 @@ int main(int argc, char *argv[])
     // Create window
     GLXContext ctx;
     Window mainWin = createMainWindow( dpy, ctx, gpu->deviceXScreen, Width(winSize), Height(winSize) );
+
+    // Register interest in the close window message
+    Atom wmDeleteMessage = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(dpy, mainWin, &wmDeleteMessage, 1);
 
     // Setup CUDA
     CUcontext cuContext;
@@ -213,10 +218,12 @@ int main(int argc, char *argv[])
 
     while( bNotDone )
     {
-        // Block until event
-        //XPeekEvent(dpy, &event);
-        if( XCheckWindowEvent(dpy, mainWin, 0xffffffff, &event) == true )
+        // flush all pending events
+        while(XPending(dpy))
         {
+            XNextEvent(dpy, &event);
+
+            //printf("Event: %d\n", event.type);
             switch(event.type)
             {
                 case KeyPress:
@@ -265,16 +272,26 @@ int main(int argc, char *argv[])
                     }
                   }
                   break;
+                case ClientMessage:
+                  {
+                    if(event.xclient.data.l[0] == wmDeleteMessage)
+                    {
+                        std::cout << "received close" << std::endl;
+                        bNotDone = false;    
+                    }
+                  }
+                  break;
                 default:
                   ;
-	  //	printf("Event: %d\n", event.type);
+	  	//printf("Event: %d\n", event.type);
             } // switch
         }
 
-        // Process commands received
+        // Flush all received commands 
         while( commandStack.popCommand(currentCommand) == true )
         {
-            if( currentCommand.m_dest == "MAIN" && currentCommand.m_action == "EXIT" )
+            if( currentCommand.m_dest == "MAIN" 
+            && currentCommand.m_action == "EXIT" )
             {
                 bNotDone = false;
             }
@@ -329,7 +346,7 @@ int main(int argc, char *argv[])
                     convertYCbYCrToY( grabber.stream2(), m_YTmp );
                     matrix[0] = rand()%10*5;
                     matrix[1] = rand()%10*6;
-                    matrix[2] = (rand()%10)*2.f/10.f;
+                    matrix[2] = 1.f;//(rand()%10)*2.f/10.f;
                     //std::cout << "matrix = " << matrix[0] << std::endl;
                     cudaMemcpy(d_matrix, matrix, sizeof(float)*9, cudaMemcpyHostToDevice);
                     warpImage(m_YTmp, m_warpedYTmp, d_matrix );
