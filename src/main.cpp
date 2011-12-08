@@ -44,9 +44,11 @@
 
 #define TEST 0
 
+const char *version = "05122011";
+
 int main(int argc, char *argv[])
 {
-    std::cout << "calibrig v04122011 - cpu + gpu beta" << std::endl;
+    std::cout << "calibrig v" << version << " - cpu + gpu beta" << std::endl;
     std::cout << "Copyright (C) 2010-2011  C. Pichard"<< std::endl;
     std::cout << "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl;
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
@@ -215,6 +217,7 @@ int main(int argc, char *argv[])
     XEvent event;
     bool bNotDone = true;
     bool captureOK = false;
+    bool saveImages = false;
 
     while( bNotDone )
     {
@@ -276,7 +279,6 @@ int main(int argc, char *argv[])
                   {
                     if(event.xclient.data.l[0] == wmDeleteMessage)
                     {
-                        std::cout << "received close" << std::endl;
                         bNotDone = false;    
                     }
                   }
@@ -295,6 +297,13 @@ int main(int argc, char *argv[])
             {
                 bNotDone = false;
             }
+
+            if( currentCommand.m_dest == "MAIN"
+            && currentCommand.m_action == "SNAPSHOT")
+            {
+                saveImages = true;    
+            }
+
             // Redirect command for analyser
             else if( currentCommand.m_dest == "ANALYSER" )
             {
@@ -315,6 +324,12 @@ int main(int argc, char *argv[])
         // Analysis
         if( captureOK == true )
         {
+            if(saveImages)
+            {
+                grabber.saveImages();
+                saveImages = false;    
+            }
+
             if(analyzer->try_lock())
             {
                 ComputationData *newResult = analyzer->acquireLastResult();

@@ -98,4 +98,9 @@ void ComputationDataCPU::drawHorizontalDisparity()
             glVertex3f((i+1)*m_binWidth,0,0);
         glEnd();
     }
-};
+}
+
+std::string ComputationDataCPU::infos()
+{
+    return std::string("Mode CPU");
+}

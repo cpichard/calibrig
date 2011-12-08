@@ -236,12 +236,11 @@ GLboolean CNvSDIin::initCaptureDeviceGL()
             // Get the video buffer pitch
             glGetVideoCaptureStreamivNV(m_videoSlot, i, GL_VIDEO_BUFFER_PITCH_NV,
                         &m_bufPitch[i]);
-
+            
             assert(glGetError() == GL_NO_ERROR);
 
             // Bind the buffer
             glBindBufferARB(GL_VIDEO_BUFFER_NV, m_vidBuf[i]);
-
 
             // Allocate required space in video capture buffer
             glBufferDataARB(GL_VIDEO_BUFFER_NV, m_bufPitch[i] * m_videoHeight,

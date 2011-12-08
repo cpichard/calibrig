@@ -22,6 +22,8 @@ public:
 
     inline UInt2 & videoSize() {return m_videoSize;}
 
+    void saveImages();
+
 private:
     GLenum cardCaptureVideo();
     bool setupCardGL();

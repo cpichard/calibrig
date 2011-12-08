@@ -47,6 +47,8 @@ public:
     virtual void drawVerticalDisparity();
     virtual void drawHorizontalDisparity();
 
+    virtual std::string infos();
+
     // REFACTOR REMOVE right
     inline IplImage * rightImage(){return m_imgRight;}
     inline IplImage * leftImage() {return m_imgLeft; }

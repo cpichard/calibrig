@@ -33,6 +33,8 @@ StereoAnalyzerGPU::~StereoAnalyzerGPU()
 void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
 {
     m_imgMutex.lock();
+    // TODO : save image right and left here
+
     convertYCbYCrToY( videoPBO, m_imgRight );
     m_rightImageIsNew = true;
     m_imgMutex.unlock();

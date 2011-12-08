@@ -19,6 +19,6 @@ bool diffImageBufferYCbYCr( ImageGL &imgA, ImageGL &imgB, ImageGL &result );
 bool streamsToRGB( ImageGL &srcImg, ImageGL &dstImg );
 bool copyImageBuffer( ImageGL &src, ImageGL &dst );
 bool copyImageBuffer( unsigned char *buffer, unsigned int width, unsigned int heigth, unsigned int depth, ImageGL &dst );
-
+bool saveGrabbedImage(ImageGL &src, const std::string &filename);
 
 #endif//__IMAGEPROCESSING_H__

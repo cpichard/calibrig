@@ -1,6 +1,7 @@
 #include "ImageProcessing.h"
 #include "CudaImageProcessing.h"
-
+#include <cstdlib>
+#include <cstdio>
 #include <cassert>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
@@ -11,6 +12,7 @@
 #include <cudpp.h>
 
 #include "CudaUtils.h"
+#include "NvSDIin.h"
 
 // Copy buffer of in in buffer of out converting YCrYcb to RGB
 bool convertYCbYCrToRGB( const ImageGL &in, ImageGL &out )
@@ -238,3 +240,36 @@ bool diffImageBufferYCbYCr( ImageGL &imgA, ImageGL &imgB, ImageGL &result )
     }
     return true;
 }
+
+bool saveGrabbedImage( ImageGL &img, const std::string &fileName )
+{
+    FILE *ptr_fp = fopen(fileName.c_str(), "wb");
+    
+    if(ptr_fp == NULL)
+    {
+        std::cout << "unable to open file" << std::endl;
+        return false;    
+    }
+    
+    size_t bufferSize = sizeof(unsigned char)*Width(img)*Height(img)/2;
+    unsigned char *buffer = (unsigned char *)malloc(bufferSize);
+    glBindBufferARB( GL_VIDEO_BUFFER_NV, BufId(img) );
+    assert(glGetError() == GL_NO_ERROR);
+    glGetBufferSubDataARB( GL_VIDEO_BUFFER_NV, 0, bufferSize, buffer);
+    assert(glGetError() == GL_NO_ERROR);
+    glBindBufferARB( GL_VIDEO_BUFFER_NV, 0 );
+    assert(glGetError() == GL_NO_ERROR);
+    if( fwrite(buffer, bufferSize, 1, ptr_fp) != 1)
+    {
+        std::cout << "error writing buffer" << std::endl;
+        free(buffer);
+        fclose(ptr_fp);
+        return false;
+    }
+
+    free(buffer);
+    fclose(ptr_fp);
+    return true;
+}
+
+

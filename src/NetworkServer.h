@@ -14,6 +14,7 @@
 #include "StereoAnalyzer.h"
 #include "CommandStack.h"
 
+extern const char *version;
 
 using boost::asio::ip::tcp;
 
@@ -130,9 +131,17 @@ public:
                 makeHistogramReply();
                 sendMessage();
             }
+            else if( msgReceived.find("SNAPSHOT") != string::npos)
+            {
+                m_commandStack.pushCommand("MAIN", "SNAPSHOT");    
+            }
+            else if( msgReceived.find("VERSION") != string::npos)
+            {
+                sendVersion();    
+            }
             else
             {
-                m_msgToSend = "{\"help\" : \"unknown command, use GETR, GETH, THRES <value>, HRANGE <value>, CLOSE or EXIT\"}";
+                m_msgToSend = "{\"help\" : \"unknown command, use GETR, GETH, THRES <value>, HRANGE <value>, SNAPSHOT, VERSION, CLOSE or EXIT\"}";
                 sendMessage();
             }
 
@@ -195,6 +204,14 @@ public:
     void sendMessage()
     {
         boost::asio::async_write( m_socket, boost::asio::buffer(m_msgToSend),
+            boost::bind( &TcpConnection::handleWrite, shared_from_this(),
+                boost::asio::placeholders::error,
+                boost::asio::placeholders::bytes_transferred));
+    }
+
+    void sendVersion()
+    {
+        boost::asio::async_write( m_socket, boost::asio::buffer(std::string(version)),
             boost::bind( &TcpConnection::handleWrite, shared_from_this(),
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred));

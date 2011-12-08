@@ -11,8 +11,9 @@
 #include "CudaUtils.h"
 
 #include "Grabber.h"
-
+#include "ImageProcessing.h"
 #include <iostream>
+#include <ctime>
 
 Grabber::Grabber( Display *dpy, HGPUNV *gpu, GLXContext ctx )
 :m_dpy(dpy), 
@@ -53,9 +54,6 @@ void Grabber::shutdown()
 // State from OFFLINE to CAPTURE_STARTED
 bool Grabber::init()
 {
-
-    std::cout << "init grabber" << std::endl;
-
     // if the card has already be initialized
     if( m_state != OFFLINE )
         return true;
@@ -67,11 +65,10 @@ bool Grabber::init()
         return false;
     }
     m_state = CARD_INITIALIZED;
-    std::cout << "card initialized" << std::endl;
+    std::cout << "Card initialized" << std::endl;
 
     if( m_card.initInputDeviceGL() )
     {
-        std::cout << "initInputDeviceGL OK" << std::endl;
         setupCardGL();
 
         //
@@ -84,7 +81,7 @@ bool Grabber::init()
         //
         bool captureStarted = m_card.startCapture();
 
-        std::cout << "starting capture" << std::endl;
+        std::cout << "Starting capture" << std::endl;
         if( captureStarted == false )
         {
             m_numFails = 1000;
@@ -257,3 +254,34 @@ bool Grabber::captureVideo()
 
     return false;
 }
+
+void Grabber::saveImages()
+{
+    // Build filenames
+    char dateAndTime[16];
+    time_t tt = time(NULL);
+    struct tm *localTime = localtime (&tt);
+    strftime(dateAndTime, 16, "%m%d%y%H%M%S", localTime);
+    char hostname[64];
+    gethostname(hostname, 64);
+    
+    std::stringstream d1, d2;
+    d1 << "./snapshot_" << hostname << "_" << dateAndTime << "_1.dat";
+    d2 << "./snapshot_" << hostname << "_" << dateAndTime << "_2.dat";
+    
+    // Format machine date time stream   
+    saveGrabbedImage(m_stream1CaptureHandle, d1.str());
+    saveGrabbedImage(m_stream2CaptureHandle, d2.str());  
+    
+    // Save format : TODO : store values in NVSDIin.cpp
+    //std::stringstream t1, t2 ;
+    //t1 << "./snapshot_" << hostname << "_" << dateAndTime << "_1.txt";
+    //t2 << "./snapshot_" << hostname << "_" << dateAndTime << "_2.txt";
+    //decodeSignalFormat
+    //decodeComponentSampling
+    //decodeBitsPerComponent
+    //decodeColorSpace
+}
+
+
+

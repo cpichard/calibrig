@@ -19,6 +19,8 @@ public:
     virtual void drawVerticalDisparity();
     virtual void drawHorizontalDisparity();
 
+    virtual std::string infos();
+
     // TODO GPU buffer used for surf
     ImageGL m_imgRight;
     ImageGL m_imgLeft;

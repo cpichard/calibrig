@@ -77,11 +77,17 @@ void HistogramScreen::draw()
     
     // Current threshold value
     glLoadIdentity();
-    glTranslatef( 0.2, 0.75, 0 );
+    glTranslatef( 0.2, 0.60, 0 );
     std::stringstream threshold;
     threshold << "Threshold : " << m_analysisResult->m_thresholdUsed; 
     glColor4f(0.95, 0.97, 0.95, 0.0f);
     drawText(0.0, 0.0, threshold.str());    
+
+    // Current mode
+    glLoadIdentity();
+    glTranslatef( 0.2, 0.70, 0 );
+    glColor4f(0.95, 0.97, 0.95, 0.0f);
+    drawText(0.0, 0.0, m_analysisResult->infos());    
 }
 
 void HistogramScreen::resizeImage( UInt2 &imgSize )

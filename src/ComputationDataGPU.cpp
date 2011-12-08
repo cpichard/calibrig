@@ -113,3 +113,9 @@ void ComputationDataGPU::drawHistogram( float *hist )
         glEnd();
     }
 };
+
+std::string ComputationDataGPU::infos()
+{
+    return std::string("Mode GPU");    
+}
+

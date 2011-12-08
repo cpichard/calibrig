@@ -27,7 +27,7 @@ public:
     virtual void drawVerticalDisparity(){};
     virtual void drawHorizontalDisparity(){};
 
-    virtual void drawInfos(){}; // TODO draw infos CPU/GPU
+    virtual std::string infos()=0; // TODO draw infos CPU/GPU
 
     // Deformation found
     Deformation m_d;

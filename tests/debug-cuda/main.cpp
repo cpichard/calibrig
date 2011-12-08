@@ -17,9 +17,12 @@
 #include "SurfDescriptor.h"
 #include "SurfCollectPoints.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    // initialize Cuda
+    // Read command line files 
+
+
+    // Initialize Cuda
     CUresult cerr;
 	int deviceCount;
 	cudaGetDeviceCount(&deviceCount);
@@ -36,7 +39,7 @@ int main()
         return false;
 	}
 
-	//Initialize the CUDA device 
+	// Initialize the CUDA device 
     CUdevice cuDevice;
 	cerr = cuDeviceGet(&cuDevice,selectedDevice);
 	checkError(cerr);
