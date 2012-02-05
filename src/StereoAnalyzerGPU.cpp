@@ -36,20 +36,26 @@ void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
     // TODO : save image right and left here
 
     convertYCbYCrToY( videoPBO, m_imgRight );
+    checkLastError();
     m_rightImageIsNew = true;
     m_imgMutex.unlock();
     computeSurfDescriptors( m_imgRight, m_rightDescriptors );
+    checkLastError();
     collectPoints( m_rightDescriptors, m_rightPoints, Size(m_imgRight) );
+    checkLastError();
 }
 
 void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
 {
     m_imgMutex.lock();
     convertYCbYCrToY( videoPBO, m_imgLeft );
+    checkLastError();
     m_leftImageIsNew = true;
     m_imgMutex.unlock();
     computeSurfDescriptors( m_imgLeft, m_leftDescriptors );
+    checkLastError();
     collectPoints( m_leftDescriptors, m_leftPoints, Size(m_imgLeft) );
+    checkLastError();
 }
 
 void StereoAnalyzerGPU::acceptCommand( const Command &command )
@@ -78,6 +84,7 @@ void StereoAnalyzerGPU::processImages()
             computeMatching( m_leftDescriptors, m_rightDescriptors,
                 m_leftMatchedPts, m_rightMatchedPts,
                 Size(m_imgRight));
+            checkLastError();
 
             // Prepare data to be computed
             m_result = new ComputationDataGPU( m_imgLeft, m_imgRight, m_rightPoints, m_leftPoints );
@@ -174,9 +181,12 @@ void StereoAnalyzerGPU::allocImages( UInt2 imgSize )
 
     //
     m_hessianData.allocImages(imgSize);
+    checkLastError();
 
     allocBuffer( m_rightPoints, m_hessianData.capacity() );
+    checkLastError();
     allocBuffer( m_leftPoints,  m_hessianData.capacity() );
+    checkLastError();
 
     m_leftMatchedPts.reserve( m_hessianData.capacity());
     m_rightMatchedPts.reserve( m_hessianData.capacity());
@@ -194,6 +204,7 @@ void StereoAnalyzerGPU::freeImages()
     releaseBuffer(m_rightPoints);
     releaseBufferAndTexture( m_imgLeft );
     releaseBufferAndTexture( m_imgRight );
+    checkLastError();
 }
 
 void StereoAnalyzerGPU::computeSurfDescriptors( ImageGL & img, DescriptorData &descriptorsData )

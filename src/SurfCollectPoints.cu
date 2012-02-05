@@ -234,7 +234,10 @@ bool collectPoints( DescriptorData &ddata, VertexBufferObject &vbo, UInt2 &imgSi
     // REFACTOR setNbElements(vbo, fsize)
     NbElements(vbo) = NbElements(ddata);
     
+    //std::cout << vbo.m_bufId << std::endl;
+
     CudaDevicePtrWrapper<VertexBufferObject,float2*> outDevicePtr(vbo);
+
     dim3 threads(8);
     dim3 grid(iDivUp(fsize, 8));
     collectPointsf<<<grid, threads >>>(ddata.m_descPoints, (float2*)outDevicePtr, fsize, (float)Width(imgSize), (float)Height(imgSize) );

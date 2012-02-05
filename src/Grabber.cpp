@@ -146,21 +146,21 @@ bool Grabber::setupCardGL()
 void Grabber::registerCudaBuffers()
 {
     // Register video buffers in cuda
-    CUresult cerr;
-    for( int i = 0; i < m_card.getNumStreams(); i++ )
-    {
-        cerr = cuGLRegisterBufferObject(m_card.getBufferObjectHandle(i));
-        checkError(cerr);
-    }
+    //CUresult cerr;
+    //for( int i = 0; i < m_card.getNumStreams(); i++ )
+    //{
+    //    //cerr = cuGLRegisterBufferObject(m_card.getBufferObjectHandle(i));
+    //    //checkError(cerr);
+    //}
 }
 
 void Grabber::unregisterCudaBuffers()
 {
     // release memory
-    for( int i = 0; i < m_card.getNumStreams(); i++ )
-    {
-        cuGLUnregisterBufferObject(m_card.getBufferObjectHandle(i));
-    }
+    //for( int i = 0; i < m_card.getNumStreams(); i++ )
+    //{
+    //    cuGLUnregisterBufferObject(m_card.getBufferObjectHandle(i));
+    //}
 }
 
 void Grabber::selectStreams()

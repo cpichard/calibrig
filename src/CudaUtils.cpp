@@ -95,8 +95,26 @@ void _checkError(CUresult err, const char * filename, const int linenum)
 				break;
 		}
 		printf("CUDA Error #%d, %s in file: %s, line: %d\n",err,error_str,filename,linenum);
+        //#ifdef __DEBUG__
+        assert(0);
+        //#endif
 	}
 }
+
+void _checkLastError(const char * filename, const int linenum)
+{
+    cudaError_t err = cudaGetLastError();
+    
+    if(err != cudaSuccess)
+    {
+        std::cout << "CUDA Error : " << cudaGetErrorString(err) 
+        << " in file " << filename
+        << ", line " << linenum
+        << std::endl;     
+    }
+        
+}
+
 
 // TODO : move this part in a GraphicSystem class
 bool cudaInitDevice(CUcontext &cuContext)
@@ -134,6 +152,9 @@ bool cudaInitDevice(CUcontext &cuContext)
 	cerr = cuGLCtxCreate(&cuContext, CU_CTX_MAP_HOST|CU_CTX_BLOCKING_SYNC, cuDevice);
 	checkError(cerr);
 
+    // We will be using mapped host memory
+    cudaSetDeviceFlags(cudaDeviceMapHost);
+    checkLastError();
 	return true;
 }
 

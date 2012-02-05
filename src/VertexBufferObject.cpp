@@ -20,8 +20,8 @@ bool allocBuffer( VertexBufferObject &vbo, unsigned int nbElement )
         //std::cout << "Alloc" << vbo.m_bufId << std::endl;
 
         // Register buffer for use with cuda
-        CUresult cerr = cuGLRegisterBufferObject( vbo.m_bufId );
-        checkError(cerr);
+        //CUresult cerr = cuGLRegisterBufferObject( vbo.m_bufId );
+        //checkError(cerr);
         glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
         assert(glGetError() == GL_NO_ERROR);
         NbElements(vbo) = nbElement;
@@ -36,7 +36,7 @@ bool allocBuffer( VertexBufferObject &vbo, unsigned int nbElement )
 bool releaseBuffer( VertexBufferObject &vbo )
 {
     //std::cout << "Released " << vbo.m_bufId << std::endl;
-    cuGLUnregisterBufferObject(vbo.m_bufId);
+    //cuGLUnregisterBufferObject(vbo.m_bufId);
     glDeleteBuffersARB(1, &vbo.m_bufId);
     vbo.m_bufId = 0;
     NbElements(vbo) = 0;

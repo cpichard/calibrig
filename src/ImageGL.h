@@ -56,7 +56,9 @@ struct CudaDevicePtrWrapper
     CudaDevicePtrWrapper( const WrappedType &in )
     :m_in(in)
     {
-        CUresult cerr = cuGLMapBufferObject(&m_devicePtr, &m_bufferSize, BufId(in) );
+        CUresult cerr = cuGLRegisterBufferObject( BufId(m_in) );
+        checkError(cerr);
+        cerr = cuGLMapBufferObject(&m_devicePtr, &m_bufferSize, BufId(m_in) );
         checkError(cerr);
     }
 
@@ -64,6 +66,7 @@ struct CudaDevicePtrWrapper
     {
     	CUresult cerr = cuGLUnmapBufferObject(BufId(m_in));
         checkError(cerr);
+        cerr = cuGLUnregisterBufferObject(BufId(m_in));
     }
 
     operator MemoryType ()

@@ -116,14 +116,20 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     dim3 grid( iDivUp( nbLeftDesc, threadSize ), iDivUp( nbRightDesc, threadSize ) );
     computeSSD<<<grid, threads>>>( leftDesc.m_descPoints, rightDesc.m_descPoints, nbLeftDesc, nbRightDesc, (float*)ssdImage );
     cudaThreadSynchronize();
+    checkLastError();
 
     // Select best matches
     // They will be transfered on the host
-    MatchedPoints *matchedPoints_h; // Host
-    MatchedPoints *matchedPoints_d; // Device
-    cudaSetDeviceFlags(cudaDeviceMapHost);
+    MatchedPoints *matchedPoints_h=NULL; // Host
+    MatchedPoints *matchedPoints_d=NULL; // Device
+    //cudaSetDeviceFlags(cudaDeviceMapHost);
+    checkLastError();
     cudaHostAlloc( (void**)&matchedPoints_h, nbRightDesc, cudaHostAllocMapped );
+    assert(matchedPoints_h!=NULL);
+    checkLastError();
+
     cudaHostGetDevicePointer((void **)&matchedPoints_d, (void *)matchedPoints_h, 0);
+    checkLastError();
 
     dim3 threads2( threadSize );
     dim3 grid2( iDivUp( nbRightDesc, threadSize ));
