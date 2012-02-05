@@ -123,7 +123,7 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     MatchedPoints *matchedPoints_h=NULL; // Host
     MatchedPoints *matchedPoints_d=NULL; // Device
     //cudaSetDeviceFlags(cudaDeviceMapHost);
-    checkLastError();
+    //checkLastError();
     cudaHostAlloc( (void**)&matchedPoints_h, nbRightDesc, cudaHostAllocMapped );
     assert(matchedPoints_h!=NULL);
     checkLastError();

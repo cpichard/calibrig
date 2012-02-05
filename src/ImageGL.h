@@ -56,21 +56,21 @@ struct CudaDevicePtrWrapper
     CudaDevicePtrWrapper( const WrappedType &in )
     :m_in(in)
     {
-        // NOTE : it may not be efficient to register buffer each time we need it
+        // NOTE : it may be inefficient to register buffer each time we need it . TODO Check !!!
         //        This code might change soon
-        CUresult cerr = cuGraphicsGLRegisterBuffer(&m_cudaResource,BufId(m_in),CU_GRAPHICS_REGISTER_FLAGS_NONE);
+        CUresult cerr = cuGraphicsGLRegisterBuffer( &m_cudaResource, BufId(m_in), CU_GRAPHICS_REGISTER_FLAGS_NONE );
         checkError(cerr);
-        cerr = cuGraphicsMapResources(1, &m_cudaResource, 0);
+        cerr = cuGraphicsMapResources( 1, &m_cudaResource, 0 );
         checkError(cerr);
-        cerr = cuGraphicsResourceGetMappedPointer(&m_devicePtr, &m_bufferSize, m_cudaResource);
+        cerr = cuGraphicsResourceGetMappedPointer( &m_devicePtr, &m_bufferSize, m_cudaResource );
         checkError(cerr);
     }
 
     ~CudaDevicePtrWrapper()
     {
-        CUresult cerr = cuGraphicsUnmapResources(1, &m_cudaResource, 0);
+        CUresult cerr = cuGraphicsUnmapResources( 1, &m_cudaResource, 0 );
         checkError(cerr);
-        cerr = cuGraphicsUnregisterResource(m_cudaResource); 
+        cerr = cuGraphicsUnregisterResource( m_cudaResource ); 
         checkError(cerr);
     }
 

@@ -11,6 +11,8 @@
 //! Creates an X11 window
 Window createMainWindow( Display *dpy, GLXContext &ctx, int xscreen, unsigned int windowWidth, unsigned int windowHeight );
 
+GLXFBConfig findFrameBufferConfig(Display *dpy, int xscreen);
+
 // To be done
 //void deleteMainWindow();
 

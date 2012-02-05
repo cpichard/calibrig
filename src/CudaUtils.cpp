@@ -152,9 +152,6 @@ bool cudaInitDevice(CUcontext &cuContext)
 	cerr = cuGLCtxCreate(&cuContext, CU_CTX_MAP_HOST|CU_CTX_BLOCKING_SYNC, cuDevice);
 	checkError(cerr);
 
-    // We will be using mapped host memory
-    cudaSetDeviceFlags(cudaDeviceMapHost);
-    checkLastError();
 	return true;
 }
 

@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     // Create a thread to run analysis on background
     // Launch analyser in background
     analyzer->resizeImages( grabber.videoSize() );
-    AnalyzerFunctor runAnalysis( *analyzer );
+    AnalyzerFunctor runAnalysis( *analyzer, cuContext, dpy, ctx, mainWin );
     boost::thread analysisThread( boost::ref(runAnalysis) );
     ComputationData *result = NULL;
     

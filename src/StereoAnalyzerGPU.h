@@ -35,13 +35,14 @@ public:
 
 private:
 
-    void computeSurfDescriptors( ImageGL &img, DescriptorData &descripors );
+    void computeSurfDescriptors( CudaImageBuffer<float> &satImage, DescriptorData &descripors );
     void computeDisparity();
     
     ImageGL m_warpedTmp;
 
     // Temporary buffers needed
-    CudaImageBuffer<float> m_satImage;
+    CudaImageBuffer<float> m_satLeftImage;
+    CudaImageBuffer<float> m_satRightImage;
     CudaImageBuffer<float> m_hesImage;
     HessianData     m_hessianData;
 
@@ -51,7 +52,7 @@ private:
 
     // Points used to compute homography
     vector<CvPoint2D32f> m_leftMatchedPts, m_rightMatchedPts;
-    boost::mutex                m_matchMutex;
+//    boost::mutex                m_matchMutex;
     ComputationDataGPU *        m_result;
     int                         m_histoRange;
     float                       m_sentThreshold;
