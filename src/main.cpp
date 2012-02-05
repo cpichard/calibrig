@@ -42,7 +42,7 @@
 #include "NetworkServer.h"
 #include "CommandStack.h"
 
-#define TEST 0
+#define TEST 1
 
 const char *version = "05122011";
 
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     catch(std::exception &e)
     {
         std::cout << e.what() << std::endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 #if TEST
@@ -110,40 +110,31 @@ int main(int argc, char *argv[])
     
     // Default window size 
     const UInt2 winSize(1024,768);
-    
+
     // Connect to X server
     Display *dpy = XOpenDisplay(NULL);
     if( dpy == NULL )
     {
-        ERROR_INFO( "Couldn't find X11 display - existing" );
-        exit(0);
-    }
-    else
-    {
-        SUCCESS_INFO( "X11 display opened" );
+        std::cerr << "Couldn't find X11 display - existing" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     // Check system devices and configuration
     if( checkSystem( dpy ) == false )
     {
-        ERROR_INFO( "Invalid devices - exiting" );
+        std::cerr << "Invalid devices - exiting" << std::endl;
         XCloseDisplay(dpy);
-        exit(0);
+        exit(EXIT_FAILURE);
     }
-    else
-    {
-        SUCCESS_INFO( "System checked" );
-    }
-
 
     // Scan the systems for GPUs
     HGPUNV gpuList[MAX_GPUS];
     int	num_gpus = ScanHW( dpy, gpuList );
     if( num_gpus < 1 )
     {
-        ERROR_INFO( "No GPU found - exiting" );
+        std::cerr << "No GPU found - exiting" << std::endl;
         XCloseDisplay(dpy);
-		exit(1);
+		exit(EXIT_FAILURE);
     }
 
     // Grab the first GPU for now for DVP
@@ -161,9 +152,9 @@ int main(int argc, char *argv[])
     CUcontext cuContext;
     if( cudaInitDevice(cuContext) == false )
     {
-        ERROR_INFO( "No CUDA device available - exiting" );
+        std::cerr << "No CUDA device available - exiting" << std::endl;
         XCloseDisplay(dpy);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // Screens
@@ -174,7 +165,7 @@ int main(int argc, char *argv[])
     activeScreen = screen1;
 
     // Create an image grabber
-    Grabber grabber(dpy, gpu, ctx) ;
+    Grabber grabber(dpy, gpu, ctx);
     if( grabber.init() )
     {
         screen1->resizeImage(grabber.videoSize());
@@ -209,7 +200,7 @@ int main(int argc, char *argv[])
     // Create a thread to run analysis on background
     // Launch analyser in background
     analyzer->resizeImages( grabber.videoSize() );
-    AnalyzerFunctor runAnalysis( *analyzer, cuContext, dpy, ctx, mainWin );
+    AnalyzerFunctor runAnalysis( *analyzer, cuContext, dpy, ctx );
     boost::thread analysisThread( boost::ref(runAnalysis) );
     ComputationData *result = NULL;
     
@@ -317,7 +308,7 @@ int main(int argc, char *argv[])
         // for now ....
         if( captureOK == false )
         {
-            ERROR_INFO( "Unable to capture image - exiting" );
+            std::cerr << "Unable to capture image - exiting" << std::endl;
             bNotDone = false;
         }
 
@@ -370,12 +361,10 @@ int main(int argc, char *argv[])
 #else
                     analyzer->updateRightImageWithSDIVideo(grabber.stream2());
 #endif
-                    analyzer->processImages();
 
                 }
 
                 analyzer->unlock();
-                
             }
 
             // Next frame
@@ -428,5 +417,5 @@ int main(int argc, char *argv[])
     // Disconnect from X server
     XCloseDisplay( dpy );
 
-    return 1;
+    return EXIT_SUCCESS;
 }

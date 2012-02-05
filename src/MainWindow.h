@@ -10,6 +10,8 @@
 
 //! Creates an X11 window
 Window createMainWindow( Display *dpy, GLXContext &ctx, int xscreen, unsigned int windowWidth, unsigned int windowHeight );
+Window createWindow(Display *dpy, int xscreen, GLXContext &ctx, int windowWidth, int windowHeight, GLXContext sharedCtx );
+
 
 GLXFBConfig findFrameBufferConfig(Display *dpy, int xscreen);
 

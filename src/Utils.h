@@ -44,24 +44,6 @@ bool operator != ( const UInt2 &a, const UInt2 &b )
     return a.m_x != b.m_x || a.m_y != b.m_y ;
 }
 
-
-// Do we really need these ?
-// Prefer to create a log struct
-inline void WARNING_INFO( const char *msg1 )
-{
-    std::cerr << msg1 << std::endl;
-}
-
-inline void ERROR_INFO( const char *msg1 )
-{
-    std::cerr << msg1 << std::endl;
-}
-
-inline void SUCCESS_INFO( const char *msg1 )
-{
-    std::cerr << msg1 << std::endl;
-}
-
 // Check glx, xwin, etc. only call in main.cpp
 bool checkSystem( Display * );
 

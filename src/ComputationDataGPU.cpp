@@ -18,14 +18,13 @@ ComputationDataGPU::ComputationDataGPU( ImageGL &l, ImageGL &r, VertexBufferObje
     copyImageBuffer( l, m_imgLeft);
     copyImageBuffer( r, m_imgRight);
 
-    copyVertexBuffer(pointsR,m_pointsR);
-    copyVertexBuffer(pointsL,m_pointsL);
+    copyVertexBuffer(pointsR, m_pointsR);
+    copyVertexBuffer(pointsL, m_pointsL);
 
 }
 
 ComputationDataGPU::~ComputationDataGPU()
 {
-
     releaseBuffer(m_pointsL);
     releaseBuffer(m_pointsR);
     releaseBufferAndTexture(m_imgLeft);
@@ -82,12 +81,12 @@ void ComputationDataGPU::drawRightKeyPoints(float ratio)
 void ComputationDataGPU::drawVerticalDisparity()
 {
     drawHistogram( m_d.m_vdisp );
-};
+}
 
 void ComputationDataGPU::drawHorizontalDisparity()
 {
     drawHistogram( m_d.m_hdisp );
-};
+}
 
 void ComputationDataGPU::drawHistogram( float *hist )
 {
@@ -112,7 +111,7 @@ void ComputationDataGPU::drawHistogram( float *hist )
             glVertex3f((i+1)*m_binWidth,0,0);
         glEnd();
     }
-};
+}
 
 std::string ComputationDataGPU::infos()
 {

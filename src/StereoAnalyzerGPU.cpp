@@ -85,27 +85,6 @@ void StereoAnalyzerGPU::acceptCommand( const Command &command )
     }
 }
 
-void StereoAnalyzerGPU::processImages()
-{
-    // Store descriptors values for testing and viewing
-    // if m_leftImageIsNew or m_rightImageIsNew, the analysis thread is working
-    //if( m_leftImageIsNew == true && m_rightImageIsNew == true )
-    //{
-    //    // Compute matching
-    //    if( m_matchMutex.try_lock() && m_result == NULL )
-    //    {
-    //        computeMatching( m_leftDescriptors, m_rightDescriptors,
-    //            m_leftMatchedPts, m_rightMatchedPts,
-    //            Size(m_imgRight));
-    //        checkLastError();
-
-    //        // Prepare data to be computed
-    //        m_result = new ComputationDataGPU( m_imgLeft, m_imgRight, m_rightPoints, m_leftPoints );
-
-    //        m_matchMutex.unlock();
-    //    }
-    //}
-}
 
 void StereoAnalyzerGPU::analyse()
 {
@@ -134,7 +113,6 @@ void StereoAnalyzerGPU::analyse()
     checkLastError();
 
     m_result = new ComputationDataGPU( m_imgLeft, m_imgRight, m_rightPoints, m_leftPoints );
-
 
     Deformation &d = m_result->m_d;
     assert( m_leftMatchedPts.size() == m_rightMatchedPts.size() );

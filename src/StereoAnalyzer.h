@@ -32,7 +32,6 @@ public:
     // Update left and right images
     virtual void updateRightImageWithSDIVideo( ImageGL &videoPBO )=0;
     virtual void updateLeftImageWithSDIVideo ( ImageGL &videoPBO )=0;
-    virtual void processImages(){}
     virtual void computeDisparity(){}
     
     // Launch analysis and return results

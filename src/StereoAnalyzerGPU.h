@@ -15,7 +15,6 @@ public:
     
     void updateRightImageWithSDIVideo( ImageGL &videoPBO );
     void updateLeftImageWithSDIVideo ( ImageGL &videoPBO );
-    void processImages();
 
     void analyse();
 
