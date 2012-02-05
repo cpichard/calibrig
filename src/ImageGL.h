@@ -56,17 +56,22 @@ struct CudaDevicePtrWrapper
     CudaDevicePtrWrapper( const WrappedType &in )
     :m_in(in)
     {
-        CUresult cerr = cuGLRegisterBufferObject( BufId(m_in) );
+        // NOTE : it may not be efficient to register buffer each time we need it
+        //        This code might change soon
+        CUresult cerr = cuGraphicsGLRegisterBuffer(&m_cudaResource,BufId(m_in),CU_GRAPHICS_REGISTER_FLAGS_NONE);
         checkError(cerr);
-        cerr = cuGLMapBufferObject(&m_devicePtr, &m_bufferSize, BufId(m_in) );
+        cerr = cuGraphicsMapResources(1, &m_cudaResource, 0);
+        checkError(cerr);
+        cerr = cuGraphicsResourceGetMappedPointer(&m_devicePtr, &m_bufferSize, m_cudaResource);
         checkError(cerr);
     }
 
     ~CudaDevicePtrWrapper()
     {
-    	CUresult cerr = cuGLUnmapBufferObject(BufId(m_in));
+        CUresult cerr = cuGraphicsUnmapResources(1, &m_cudaResource, 0);
         checkError(cerr);
-        cerr = cuGLUnregisterBufferObject(BufId(m_in));
+        cerr = cuGraphicsUnregisterResource(m_cudaResource); 
+        checkError(cerr);
     }
 
     operator MemoryType ()
@@ -75,9 +80,10 @@ struct CudaDevicePtrWrapper
     }
 
 
-    const WrappedType &m_in;
-    CUdeviceptr m_devicePtr;
-    unsigned int m_bufferSize;
+    const WrappedType   &m_in;
+    CUgraphicsResource  m_cudaResource;
+    CUdeviceptr         m_devicePtr;
+    unsigned int        m_bufferSize;
 };
 
 
