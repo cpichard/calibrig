@@ -21,7 +21,7 @@ public:
 
     virtual std::string infos();
 
-    // TODO GPU buffer used for surf
+    // GPU buffer used for surf
     ImageGL m_imgRight;
     ImageGL m_imgLeft;
 

@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 
 #if TEST
     // Development, force use of GPU mode
-    useGPU = true;
+    //useGPU = true;
 #endif
 
     // Value for the server
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
                     activeScreen->setResult(NULL);
 
                     if(result != NULL)
-                        delete result;
+                        analyzer->disposeResult(result);
 
                     result = newResult;
                     newResult = NULL;

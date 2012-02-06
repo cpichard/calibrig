@@ -6,11 +6,11 @@
 ComputationDataGPU::ComputationDataGPU( ImageGL &l, ImageGL &r, VertexBufferObject &pointsR, VertexBufferObject &pointsL )
 :ComputationData()
 {
-    m_leftMatchedPts.reserve(3000);
-    m_rightMatchedPts.reserve(3000);
+    m_leftMatchedPts.reserve(5000);
+    m_rightMatchedPts.reserve(5000);
     
-    allocBufferAndTexture(m_imgLeft,Size(l));
-    allocBufferAndTexture(m_imgRight,Size(r));
+    allocBufferAndTexture(m_imgLeft, Size(l));
+    allocBufferAndTexture(m_imgRight, Size(r));
 
     allocBuffer(m_pointsL, Capacity(pointsL));
     allocBuffer(m_pointsR, Capacity(pointsR));
@@ -20,7 +20,6 @@ ComputationDataGPU::ComputationDataGPU( ImageGL &l, ImageGL &r, VertexBufferObje
 
     copyVertexBuffer(pointsR, m_pointsR);
     copyVertexBuffer(pointsL, m_pointsL);
-
 }
 
 ComputationDataGPU::~ComputationDataGPU()

@@ -21,10 +21,6 @@ bool allocBuffer( PixelBufferObject &img, UInt2 &imgSize )
         glGenBuffersARB( 1, &(img.m_bufId) );
         glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, img.m_bufId );
         glBufferDataARB( GL_PIXEL_UNPACK_BUFFER_ARB, Width(imgSize) * Height(imgSize) * sizeof(float), NULL, GL_STREAM_COPY);
-
-        // Register buffer for use with cuda
-        //CUresult cerr = cuGLRegisterBufferObject( img.m_bufId );
-        //checkError(cerr);
         glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
 
         SetSize(img, imgSize);
@@ -39,9 +35,6 @@ bool releaseBuffer( PixelBufferObject &img )
     if( Size(img) != UInt2(0,0) )
     {
         SetSize(img,UInt2(0,0));
-
-        // Unregister buffer from cuda
-        //cuGLUnregisterBufferObject( img.m_bufId );
 
         // Release PBO
         glDeleteBuffers(1, &img.m_bufId );
@@ -69,8 +62,6 @@ bool allocBufferAndTexture( GLuint &buf, GLuint &tex, unsigned int width, unsign
 	glBufferDataARB( GL_PIXEL_UNPACK_BUFFER_ARB, width * height * depth, NULL, GL_STREAM_COPY );
 
     // Register buffer for use with cuda
-    //CUresult cerr = cuGLRegisterBufferObject( buf );
-    //checkError(cerr);
     glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
 
     return true;
@@ -91,10 +82,6 @@ bool allocBufferAndTexture( ImageGL &img, UInt2 &imgSize )
 
 static bool releaseBufferAndTexture( GLuint &buf, GLuint &tex )
 {
-    // Unregister buffer from cuda
-    //cuGLUnregisterBufferObject( buf );
-
-    //std::cout << "Released " << tex << std::endl;
     // Release PBO
     glDeleteBuffers(1, &buf );
     buf = 0;

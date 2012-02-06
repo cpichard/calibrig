@@ -142,10 +142,7 @@ bool cudaInitDevice(CUcontext &cuContext)
 	}
 
 	//Initialize the CUDA device for GL interoperability
-     // TODO make global
     CUdevice cuDevice;
-
-	//Initialize the CUDA device for GL interoperability
 	cerr = cuDeviceGet(&cuDevice,selectedDevice);
 	checkError(cerr);
 

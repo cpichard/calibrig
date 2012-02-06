@@ -23,6 +23,7 @@ public:
     void freeImages();
 
     virtual ComputationData * acquireLastResult();
+    virtual void disposeResult(ComputationData *);
     void acceptCommand( const Command &command );
     
     // Displaying
@@ -50,9 +51,8 @@ private:
     DescriptorData  m_leftDescriptors;
 
     // Points used to compute homography
-    vector<CvPoint2D32f> m_leftMatchedPts, m_rightMatchedPts;
-//    boost::mutex                m_matchMutex;
     ComputationDataGPU *        m_result;
+    ComputationDataGPU *        m_toDispose;
     int                         m_histoRange;
     float                       m_sentThreshold;
 };

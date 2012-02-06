@@ -32,6 +32,7 @@ public:
     virtual void analyse();
     virtual void computeDisparity();
     virtual ComputationData * acquireLastResult() { ComputationData *result = m_result; m_result = NULL; return result; };
+    virtual void disposeResult(ComputationData *result){ delete result;}
     virtual void resizeImages( UInt2 imgSize );
     virtual void allocImages( UInt2 imgSize );
     virtual void freeImages( );

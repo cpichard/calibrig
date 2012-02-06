@@ -41,7 +41,7 @@ public:
     inline bool imagesAreNew() { boost::mutex::scoped_lock sl(m_imgMutex); return m_leftImageIsNew && m_rightImageIsNew; }
 
     virtual ComputationData * acquireLastResult() = 0; 
-
+    virtual void disposeResult(ComputationData *)=0;
     virtual void resizeImages( UInt2 imgSize )=0;
     virtual void allocImages( UInt2 imgSize )=0;
     virtual void freeImages( )=0;
