@@ -44,12 +44,12 @@
 
 #define TEST 0
 
-const char *version = "05122011";
+const char *version = "06022012";
 
 int main(int argc, char *argv[])
 {
     std::cout << "calibrig v" << version << " - cpu + gpu beta" << std::endl;
-    std::cout << "Copyright (C) 2010-2011  C. Pichard"<< std::endl;
+    std::cout << "Copyright (C) 2010-2012  C. Pichard"<< std::endl;
     std::cout << "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl;
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
     std::cout << "under certain conditions; " << std::endl;
