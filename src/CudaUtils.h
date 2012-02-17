@@ -9,6 +9,7 @@
 #include "Utils.h"
 
 void _checkError( CUresult err, const char * filename, const int linenum);
+void _checkLastError(const char * filename, const int linenum);
 
 bool cudaInitDevice(CUcontext &cuContext);
 void cudaReleaseDevice(CUcontext &cuContext);
@@ -23,5 +24,5 @@ void cudaReleaseDevice(CUcontext &cuContext);
 
 //define to add the line & filename to the error output
 #define checkError(err) _checkError(err, __FILE__, __LINE__)
-
+#define checkLastError() _checkLastError( __FILE__, __LINE__)
 #endif

@@ -316,30 +316,34 @@ GLenum CNvSDIin::capture(GLuint *sequenceNum, GLuint64EXT *captureTime)
 {	
 	GLenum ret;
  	// Make OpenGL context current.
-#ifdef MEASURE_PERFORMANCE
 	GLuint64EXT captureTimeStart;
 	GLuint64EXT captureTimeEnd;	
-#endif	
 
 	// Capture the video to a buffer object	
-#ifdef MEASURE_PERFORMANCE
 	glBeginQuery(GL_TIME_ELAPSED_EXT,m_captureTimeQuery);		
 	glGetInteger64v(GL_CURRENT_TIME_NV,(GLint64EXT *)&captureTimeStart);
-#endif
 
 	ret = glVideoCaptureNV(m_videoSlot, sequenceNum, captureTime);		
 
-#ifdef MEASURE_PERFORMANCE
 	glGetInteger64v(GL_CURRENT_TIME_NV,(GLint64EXT *)&captureTimeEnd);
 	glEndQuery(GL_TIME_ELAPSED_EXT);	
 	m_gviTime = (captureTimeEnd - *captureTime)*.000000001;
 	GLuint64EXT timeElapsed;
 	glGetQueryObjectui64vEXT(m_captureTimeQuery, GL_QUERY_RESULT, &timeElapsed);
 	m_gpuTime = timeElapsed*.000000001;	
-#endif
-
-
-//assert(glGetError() == GL_NO_ERROR);
+    
+    // Drop frames if the frame rate is less than 2 frames per second 
+    float frameRate = 2.f;
+    float captureLatency=m_gviTime;
+    //int frameNumber=0;
+    while(captureLatency>1.5/frameRate)
+    {
+	    ret = glVideoCaptureNV(m_videoSlot, sequenceNum, &captureTimeStart);	
+	    glGetInteger64v(GL_CURRENT_TIME_NV,(GLint64EXT *)&captureTimeEnd);
+        captureLatency = (captureTimeEnd-captureTimeStart)*0.000000001;
+        //printf("Dropping frame %d\n", frameNumber);
+        //frameNumber++;
+    }
 	return ret;	
 }
 
@@ -669,7 +673,14 @@ GLboolean CNvSDIin::initInputDeviceGL()
     fprintf(stderr, "Jack %d : Bits per component:: %s\n", i+1,
 		decodeBitsPerComponent(value));
 
+    // Number of ring buffers
+    XNVCTRLSetTargetAttribute(dpy, NV_CTRL_TARGET_TYPE_GVI, 0, i,
+            NV_CTRL_GVI_NUM_CAPTURE_SURFACES,
+            1);
+    fprintf(stderr, "Number of capture surface:: 1\n");
   } // for numStreams
+
+
     return GL_TRUE;
 }
 

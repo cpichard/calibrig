@@ -115,23 +115,26 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     dim3 threads(threadSize,threadSize);
     dim3 grid( iDivUp( nbLeftDesc, threadSize ), iDivUp( nbRightDesc, threadSize ) );
     computeSSD<<<grid, threads>>>( leftDesc.m_descPoints, rightDesc.m_descPoints, nbLeftDesc, nbRightDesc, (float*)ssdImage );
+    checkLastError();
     cudaThreadSynchronize();
-
     // Select best matches
     // They will be transfered on the host
-    MatchedPoints *matchedPoints_h; // Host
-    MatchedPoints *matchedPoints_d; // Device
-    cudaSetDeviceFlags(cudaDeviceMapHost);
+    MatchedPoints *matchedPoints_h=NULL; // Host
+    MatchedPoints *matchedPoints_d=NULL; // Device
+    // pas besoin normalement cudaSetDeviceFlags(cudaDeviceMapHost);
     cudaHostAlloc( (void**)&matchedPoints_h, nbRightDesc, cudaHostAllocMapped );
+    assert(matchedPoints_h!=NULL);
+    checkLastError(); 
     cudaHostGetDevicePointer((void **)&matchedPoints_d, (void *)matchedPoints_h, 0);
-
+    assert(matchedPoints_d!=NULL); 
+    checkLastError();
     dim3 threads2( threadSize );
     dim3 grid2( iDivUp( nbRightDesc, threadSize ));
     selectKernel<<< grid2, threads2 >>>( (float*)ssdImage,
         nbLeftDesc, nbRightDesc, matchedPoints_d,
         leftDesc.m_descPoints, rightDesc.m_descPoints,
          (float)Width(imgSize), (float)Height(imgSize) );
-
+    checkLastError();
     // at this point we get some pair of matching points
     // retrieve buffer on cpu memory
     cudaThreadSynchronize();
@@ -143,7 +146,7 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     // Disambiguation of matches
     unsigned int nbMatchedPoints = 0;
     copyPoints( leftPts, rightPts, nbRightDesc, matchedPoints_h, nbMatchedPoints  );
-
+    checkLastError();
     // Resize to numbers of found values
     leftPts.resize(nbMatchedPoints);
     rightPts.resize(nbMatchedPoints);
@@ -151,7 +154,7 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     // Release result buffer
     cudaFreeHost(matchedPoints_h);
     releaseBuffer(ssdImage);
-
+    checkLastError();
     return true;
 }
 

@@ -65,55 +65,6 @@ void drawPointf( HessianPoint *points, int npoints, float *img, int width, int h
         const unsigned int index = (unsigned int) (pt.m_x + pt.m_y*width);
         img[index] = 0;
     }
-
-}
-
-
-// Debugging purpose
-// Dumb fast code to write red pixels around located point
-__global__
-void drawPointuc( HessianPoint *points, int npoints, uchar4 *img, int width, int height, int step )
-{
-    const int n = blockDim.x * blockIdx.x + threadIdx.x;
-
-    if( n >= npoints )
-        return;
-
-    const HessianPoint pt = points[n];
-
-    if( pt.m_x >=4 && pt.m_x < width-4 && pt.m_y>=4 && pt.m_y< height-4 )
-    {
-        const unsigned int index1 = (unsigned int) (pt.m_x + pt.m_y*width);
-        const unsigned int index2 = (unsigned int) (pt.m_x+1 + pt.m_y*width);
-        const unsigned int index3 = (unsigned int) (pt.m_x-1 + pt.m_y*width);
-        const unsigned int index4 = (unsigned int) (pt.m_x+1 + (pt.m_y+1)*width);
-        const unsigned int index5 = (unsigned int) (pt.m_x+1 + (pt.m_y-1)*width);
-        const unsigned int index6 = (unsigned int) (pt.m_x-1 + (pt.m_y+1)*width);
-        const unsigned int index7 = (unsigned int) (pt.m_x-1 + (pt.m_y-1)*width);
-
-        img[index1].x = 255;
-        img[index1].y = 0;
-        img[index1].z = 0;
-        img[index2].x = 255;
-        img[index2].y = 0;
-        img[index2].z = 0;
-        img[index3].x = 255;
-        img[index3].y = 0;
-        img[index3].z = 0;
-        img[index4].x = 255;
-        img[index4].y = 0;
-        img[index4].z = 0;
-        img[index5].x = 255;
-        img[index5].y = 0;
-        img[index5].z = 0;
-        img[index6].x = 255;
-        img[index6].y = 0;
-        img[index6].z = 0;
-        img[index7].x = 255;
-        img[index7].y = 0;
-        img[index7].z = 0;
-    }
-
 }
 
 
@@ -131,7 +82,7 @@ void collectPointsf( Points *points, float2 *vbo, int npoints, float width, floa
 }
 
 // Initialize the descriptor data found hessian points found,
-bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data  )
+bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data )
 {
     // Count number of validated hessian points
     const size_t numPoints = h_data.capacity();
@@ -140,18 +91,21 @@ bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data  )
 
     cudaMalloc((void**)&validatedPoints, numPoints*sizeof(unsigned int));
     cudaMalloc((void**)&newIndexes, numPoints*sizeof(unsigned int));
+    checkLastError();
 
-    // Map validation
+    // Map validation - write 0 or 1 in validatedPoints depending on the point validated
     dim3 threads(8);
     dim3 grid(iDivUp(numPoints, 8));
     validatePoint<<<grid, threads>>>(h_data.m_dPoints, validatedPoints, numPoints);
+    checkLastError();
     cudaThreadSynchronize();
+
     // Scan
 	CUDPPConfiguration conf;
 	conf.op = CUDPP_ADD;
 	conf.datatype = CUDPP_UINT;
 	conf.algorithm = CUDPP_SCAN;
-	conf.options = CUDPP_OPTION_BACKWARD | CUDPP_OPTION_INCLUSIVE; 
+	conf.options = CUDPP_OPTION_FORWARD | CUDPP_OPTION_EXCLUSIVE; 
 
     // Allocate plan for rows integration
     CUDPPHandle scanplan = 0;
@@ -159,52 +113,57 @@ bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data  )
     if (CUDPP_SUCCESS != result)
     {
         printf("Error creating CUDPPPlan\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
+    // Scan to make new positions of points
     cudppScan(scanplan, newIndexes, validatedPoints, numPoints);
-    
+    checkLastError();
+
     result = cudppDestroyPlan(scanplan);
     if (CUDPP_SUCCESS != result)
     {
         printf("Error destroying CUDPPPlan\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     
     // Read the number of validated points
     unsigned int numPointFound;
-    cudaMemcpy( &numPointFound, newIndexes, 1*sizeof(unsigned int), cudaMemcpyDeviceToHost );
-
+    cudaMemcpy( &numPointFound, newIndexes+(numPoints-1), 1*sizeof(unsigned int), cudaMemcpyDeviceToHost );
+    checkLastError();
+    
     // Realloc descriptor data with the number of validated hessian points
     d_data.reallocPoints(numPointFound);
 
     //std::cout << "found" << numPointFound << std::endl;
     // Compact - copy correct hessian to descriptors
-    copyHessianToDescriptor<<<grid, threads>>> ( h_data.m_dPoints, d_data.m_descPoints, validatedPoints, newIndexes, numPoints );
+    copyHessianToDescriptor<<<grid, threads>>> ( h_data.m_dPoints, d_data.m_descPoints, validatedPoints, newIndexes, numPointFound );
     cudaThreadSynchronize();
+    checkLastError();
     
     // Free temporary memory
     cudaFree(validatedPoints);
+    checkLastError();
     cudaFree(newIndexes);
-
+    checkLastError();
     return true;
 }
 
-void drawPoints( HessianData &hdata, ImageGL &image )
-{
-    // TODO : fonction dans
-    if( hdata.capacity() == 0 )
-    {
-        std::cout << "no points found" << std::endl;
-        return;
-    }
-
-    dim3 threads(8);
-    dim3 grid(iDivUp(hdata.capacity(), 8));
-    CudaDevicePtrWrapper<ImageGL,uchar4*> imgPtr(image);
-	drawPointuc<<<grid, threads>>>( hdata.m_dPoints, hdata.capacity(),(uchar4*)imgPtr, Width(image), Height(image), Width(image) );
-    cudaThreadSynchronize();
-}
+//void drawPoints( HessianData &hdata, ImageGL &image )
+//{
+//    // TODO : fonction dans
+//    if( hdata.capacity() == 0 )
+//    {
+//        std::cout << "no points found" << std::endl;
+//        return;
+//    }
+//
+//    dim3 threads(8);
+//    dim3 grid(iDivUp(hdata.capacity(), 8));
+//    CudaDevicePtrWrapper<ImageGL,uchar4*> imgPtr(image);
+//	drawPointuc<<<grid, threads>>>( hdata.m_dPoints, hdata.capacity(),(uchar4*)imgPtr, Width(image), Height(image), Width(image) );
+//    cudaThreadSynchronize();
+//}
 
 
 // Debugging purpose
@@ -228,27 +187,39 @@ void drawPoints( HessianData &hdata, CudaImageBuffer<float> &image )
     cudaThreadSynchronize();
 }
 
+// Copy found points in ddata to a bound vertex buffer object
 bool collectPoints( DescriptorData &ddata, VertexBufferObject &vbo, UInt2 &imgSize )
 {
-    size_t fsize = NbElements(ddata); //max( NbElements(vbo), NbElements(ddata) );
-    // REFACTOR setNbElements(vbo, fsize)
-    NbElements(vbo) = NbElements(ddata);
+    size_t nbPointInDesc = NbElements(ddata);
     
+    if(nbPointInDesc<8)
+        return false;    
+
+    // REFACTOR setNbElements(vbo, nbPointInDesc)
+    NbElements(vbo) = nbPointInDesc; 
+   
+    // TODO : check that the vertex buffer object has 
+    // sufficient memory
+ 
     CudaDevicePtrWrapper<VertexBufferObject,float2*> outDevicePtr(vbo);
     dim3 threads(8);
-    dim3 grid(iDivUp(fsize, 8));
-    collectPointsf<<<grid, threads >>>(ddata.m_descPoints, (float2*)outDevicePtr, fsize, (float)Width(imgSize), (float)Height(imgSize) );
+    dim3 grid(iDivUp(nbPointInDesc, 8));
+    collectPointsf<<<grid, threads >>>(ddata.m_descPoints, (float2*)outDevicePtr, nbPointInDesc, (float)Width(imgSize), (float)Height(imgSize) );
     cudaThreadSynchronize();
+    checkLastError();
     return true;
 }
 
 
 bool collectPoints( HessianData &hdata, VertexBufferObject &vbo, UInt2 &imgSize )
 {
-    size_t fsize = max( NbElements(vbo), hdata.capacity() );
+    size_t fsize = hdata.capacity();
+    if(fsize<8)
+        return 0;
     
     // REFACTOR setNbElements(vbo, fsize)
     NbElements(vbo) = fsize;
+
 
     // Map VBO
     CudaDevicePtrWrapper<VertexBufferObject,float2*> outDevicePtr(vbo);
@@ -256,6 +227,7 @@ bool collectPoints( HessianData &hdata, VertexBufferObject &vbo, UInt2 &imgSize 
     dim3 threads(8);
     dim3 grid(iDivUp(fsize, 8));
     collectPointsf<<<grid, threads >>>(hdata.m_dPoints, (float2*)outDevicePtr, fsize, (float)Width(imgSize), (float)Height(imgSize) );
+    checkLastError();
     cudaThreadSynchronize();
     return true;
 }

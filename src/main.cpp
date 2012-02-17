@@ -56,11 +56,13 @@ int main(int argc, char *argv[])
 
     unsigned int serverPort = 8090;
     bool useGPU = false;
+    bool noThread = false;
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
         ("port", po::value<unsigned int>(), "server port")
         ("gpu", "enable gpu computing")
+        ("nothread", "remove gpu multi threading ")
     ;
 
 	// Parse command line
@@ -87,6 +89,10 @@ int main(int argc, char *argv[])
         if( vm.count("gpu") )
         {
             useGPU = true;
+        }
+        if( vm.count("nothread") )
+        {
+            noThread = true;
         }
     }
 
@@ -210,7 +216,11 @@ int main(int argc, char *argv[])
     // Launch analyser in background
     analyzer->resizeImages( grabber.videoSize() );
     AnalyzerFunctor runAnalysis( *analyzer );
-    boost::thread analysisThread( boost::ref(runAnalysis) );
+    boost::thread *analysisThread=NULL;
+    if(noThread == false)
+    {
+        analysisThread = new boost::thread( boost::ref(runAnalysis) );
+    }
     ComputationData *result = NULL;
     
     // Main XWindows event loop
@@ -371,10 +381,13 @@ int main(int argc, char *argv[])
                     analyzer->updateRightImageWithSDIVideo(grabber.stream2());
 #endif
                     analyzer->processImages();
-
                 }
 
                 analyzer->unlock();
+                if(noThread==true)
+                {
+                    analyzer->analyse();
+                }
                 
             }
 
@@ -395,10 +408,14 @@ int main(int argc, char *argv[])
 #endif
     
     // Wait for thread to stop
-    analyzer->lock();
-    runAnalysis.stop();
-    analyzer->unlock();
-    analysisThread.join();
+    if(noThread==false)
+    {
+        analyzer->lock();
+        runAnalysis.stop();
+        analyzer->unlock();
+        analysisThread->join();
+        std::cout << "Using threaded analyzer" << std::endl;
+    }
 	delete analyzer;
 
     // Free screens

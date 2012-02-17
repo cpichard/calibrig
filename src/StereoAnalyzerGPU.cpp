@@ -34,22 +34,27 @@ void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
 {
     m_imgMutex.lock();
     // TODO : save image right and left here
-
     convertYCbYCrToY( videoPBO, m_imgRight );
+    checkLastError();
     m_rightImageIsNew = true;
     m_imgMutex.unlock();
     computeSurfDescriptors( m_imgRight, m_rightDescriptors );
+    checkLastError();
     collectPoints( m_rightDescriptors, m_rightPoints, Size(m_imgRight) );
+    checkLastError();
 }
 
 void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
 {
     m_imgMutex.lock();
     convertYCbYCrToY( videoPBO, m_imgLeft );
+    checkLastError();
     m_leftImageIsNew = true;
     m_imgMutex.unlock();
     computeSurfDescriptors( m_imgLeft, m_leftDescriptors );
+    checkLastError();
     collectPoints( m_leftDescriptors, m_leftPoints, Size(m_imgLeft) );
+    checkLastError();
 }
 
 void StereoAnalyzerGPU::acceptCommand( const Command &command )
@@ -70,20 +75,27 @@ void StereoAnalyzerGPU::processImages()
 {
     // Store descriptors values for testing and viewing
     // if m_leftImageIsNew or m_rightImageIsNew, the analysis thread is working
+    m_imgMutex.lock();
     if( m_leftImageIsNew == true && m_rightImageIsNew == true )
     {
+        m_imgMutex.unlock();
         // Compute matching
         if( m_matchMutex.try_lock() && m_result == NULL )
         {
+            checkLastError();
             computeMatching( m_leftDescriptors, m_rightDescriptors,
                 m_leftMatchedPts, m_rightMatchedPts,
                 Size(m_imgRight));
-
+            checkLastError();
             // Prepare data to be computed
             m_result = new ComputationDataGPU( m_imgLeft, m_imgRight, m_rightPoints, m_leftPoints );
 
             m_matchMutex.unlock();
         }
+    }
+    else
+    {
+        m_imgMutex.unlock();
     }
 }
 
@@ -92,7 +104,9 @@ void StereoAnalyzerGPU::analyse()
     if( m_imgWidth == 0 || m_imgHeight == 0 )
         return;
 
+    m_imgMutex.lock();
     m_leftImageIsNew = m_rightImageIsNew = false;
+    m_imgMutex.unlock();
 
     // If no result has been prepared, go away
 
@@ -200,22 +214,22 @@ void StereoAnalyzerGPU::computeSurfDescriptors( ImageGL & img, DescriptorData &d
 {
     // Copy RGBA image [0,255] in float buffer [0,1] allocated by cuda
     convertRGBAToCudaBufferY( img, m_satImage );
-
+    checkLastError();
     // Create integral image
     convertToIntegral( m_satImage );
-
+    checkLastError();
     // Compute hessian and determinants
     computeHessianDet( m_satImage, m_hesImage, m_hessianData );
-
+    checkLastError();
     // Find position of maximum values in determinant image
     computeNonMaxSuppression( m_hesImage, m_hessianData );
-
+    checkLastError();
     // Copy hessian points in descriptors
     collectHessianPoints( m_hessianData, descriptorsData );
-
+    checkLastError();
     // Compute Surf descriptors
     computeDescriptors( m_satImage, descriptorsData );
-
+    checkLastError();
 }
 
 ComputationData * StereoAnalyzerGPU::acquireLastResult()

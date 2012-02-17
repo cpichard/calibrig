@@ -98,6 +98,23 @@ void _checkError(CUresult err, const char * filename, const int linenum)
 	}
 }
 
+
+void _checkLastError(const char * filename, const int linenum)
+{
+    cudaError_t err = cudaGetLastError();
+    
+    if(err != cudaSuccess)
+    {
+        std::cout << "CUDA Error : " << cudaGetErrorString(err)
+        << " in file " << filename
+        << ", line " << linenum
+        << std::endl;
+        assert(0);
+    }
+        
+}
+
+
 // TODO : move this part in a GraphicSystem class
 bool cudaInitDevice(CUcontext &cuContext)
 {
