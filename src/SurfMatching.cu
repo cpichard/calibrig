@@ -121,8 +121,8 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     // They will be transfered on the host
     MatchedPoints *matchedPoints_h=NULL; // Host
     MatchedPoints *matchedPoints_d=NULL; // Device
-    // pas besoin normalement cudaSetDeviceFlags(cudaDeviceMapHost);
-    cudaHostAlloc( (void**)&matchedPoints_h, nbRightDesc, cudaHostAllocMapped );
+    //cudaSetDeviceFlags(cudaDeviceMapHost);
+    cudaHostAlloc( (void**)&matchedPoints_h, nbRightDesc*sizeof(MatchedPoints), cudaHostAllocMapped );
     assert(matchedPoints_h!=NULL);
     checkLastError(); 
     cudaHostGetDevicePointer((void **)&matchedPoints_d, (void *)matchedPoints_h, 0);

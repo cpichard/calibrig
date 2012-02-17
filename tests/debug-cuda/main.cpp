@@ -136,8 +136,8 @@ int main(int argc, char *argv[])
     unsigned char *imgRight = (unsigned char*)malloc(bufferSize);
     unsigned char *imgLeft= (unsigned char*)malloc(bufferSize);
 
-    readTestImage( "./snapshot_cbox2_021312160142_1.dat", imgRight, bufferSize);
-    readTestImage( "./snapshot_cbox2_021312160142_2.dat", imgLeft, bufferSize);
+    readTestImage( "./snapshot_cbox2_021412133719_1.dat", imgRight, bufferSize);
+    readTestImage( "./snapshot_cbox2_021412133719_2.dat", imgLeft, bufferSize);
 
     VertexBufferObject rightPoints;
     VertexBufferObject leftPoints;
@@ -150,6 +150,8 @@ int main(int argc, char *argv[])
 
     vector<CvPoint2D32f> leftMatchedPts;
     vector<CvPoint2D32f> rightMatchedPts;
+    leftMatchedPts.reserve(10000);
+    rightMatchedPts.reserve(10000);
     computeMatching( leftDescriptors, rightDescriptors, leftMatchedPts, rightMatchedPts, imgSize);
 
     
