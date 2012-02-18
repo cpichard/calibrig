@@ -6,7 +6,9 @@
 #include <cstdio>
 #include <cassert>
 #include <assert.h>
-
+#include <fstream>
+#include <string>
+#include <vector>
 #include <cv.h>
 #include <highgui.h>
 
@@ -112,23 +114,26 @@ void readTestImage(const std::string &fileName, void *buffer, size_t bufferSize)
     fclose(ptr_fp);
 }
 
+void readTestsFiles(std::vector<std::string> &testFiles, const std::string &fileName)
+{
+    std::ifstream ifs( fileName.c_str() );
+    std::string temp;
+
+    while( getline( ifs, temp ) )
+    {    
+        testFiles.push_back( temp );    
+    }
+}
 
 int main(int argc, char *argv[])
 {
     // Read command line files 
-
+    
+    // Init cuda
     CUcontext cuContext;
     initCuda(cuContext); 
 
-    // Open 1080i 422 image
-    //const char *filename="./test.tif"; 
-    //IplImage* img=0; 
-    //img=cvLoadImage(filename);
-    //img=cvCreateImage(cvSize(960,1080),IPL_DEPTH_8U,4); 
-
-    // Copy to cuda buffer
-
-    std::cout << "image ok" << std::endl;
+    // Image buffer allocation
     unsigned int depth =4;
     unsigned int width=960;
     unsigned int height=1080;
@@ -136,24 +141,36 @@ int main(int argc, char *argv[])
     unsigned char *imgRight = (unsigned char*)malloc(bufferSize);
     unsigned char *imgLeft= (unsigned char*)malloc(bufferSize);
 
-    readTestImage( "./snapshot_cbox2_021412133719_1.dat", imgRight, bufferSize);
-    readTestImage( "./snapshot_cbox2_021412133719_2.dat", imgLeft, bufferSize);
+    // Read the list of test files
+    std::vector<std::string> testsFiles;
+    readTestsFiles(testsFiles, "./tests.txt");
+   
+    // Launch tests 
+    for(int i=0; i<testsFiles.size(); i++)
+    {
+        std::stringstream testImage1;
+        testImage1 << "./" << testsFiles[i] << "_1.dat";
+        std::stringstream testImage2;
+        testImage2 << "./" << testsFiles[i] << "_2.dat";
+        
+        readTestImage( testImage1.str(), imgRight, bufferSize);
+        readTestImage( testImage2.str(), imgLeft, bufferSize);
+        
+        VertexBufferObject rightPoints;
+        VertexBufferObject leftPoints;
+        DescriptorData  rightDescriptors;
+        DescriptorData  leftDescriptors;
+        computeDescriptorsLane(imgRight, depth, width, height, rightPoints, rightDescriptors);
+        computeDescriptorsLane(imgLeft, depth, width, height, leftPoints, leftDescriptors);
+        
+        UInt2 imgSize(1920,1080);
 
-    VertexBufferObject rightPoints;
-    VertexBufferObject leftPoints;
-    DescriptorData  rightDescriptors;
-    DescriptorData  leftDescriptors;
-    computeDescriptorsLane(imgRight, depth, width, height, rightPoints, rightDescriptors);
-    computeDescriptorsLane(imgLeft, depth, width, height, leftPoints, leftDescriptors);
-    
-    UInt2 imgSize(1920,1080);
-
-    vector<CvPoint2D32f> leftMatchedPts;
-    vector<CvPoint2D32f> rightMatchedPts;
-    leftMatchedPts.reserve(10000);
-    rightMatchedPts.reserve(10000);
-    computeMatching( leftDescriptors, rightDescriptors, leftMatchedPts, rightMatchedPts, imgSize);
-
+        vector<CvPoint2D32f> leftMatchedPts;
+        vector<CvPoint2D32f> rightMatchedPts;
+        leftMatchedPts.reserve(10000);
+        rightMatchedPts.reserve(10000);
+        computeMatching( leftDescriptors, rightDescriptors, leftMatchedPts, rightMatchedPts, imgSize);
+    }
     
     // finalize cuda
     CUresult cerr = cuCtxDestroy(cuContext);
