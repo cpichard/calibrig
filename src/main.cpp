@@ -44,23 +44,25 @@
 
 #define TEST 1
 
-const char *version = "05122011";
+const char *version = "06022012";
 
 int main(int argc, char *argv[])
 {
     std::cout << "calibrig v" << version << " - cpu + gpu beta" << std::endl;
-    std::cout << "Copyright (C) 2010-2011  C. Pichard"<< std::endl;
+    std::cout << "Copyright (C) 2010-2012  C. Pichard"<< std::endl;
     std::cout << "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl;
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
     std::cout << "under certain conditions; " << std::endl;
 
     unsigned int serverPort = 8090;
     bool useGPU = false;
+    bool noThread = false;
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
         ("port", po::value<unsigned int>(), "server port")
         ("gpu", "enable gpu computing")
+        ("nothread", "remove gpu multi threading ")
     ;
 
 	// Parse command line
@@ -87,6 +89,10 @@ int main(int argc, char *argv[])
         if( vm.count("gpu") )
         {
             useGPU = true;
+        }
+        if( vm.count("nothread") )
+        {
+            noThread = true;
         }
     }
 
@@ -201,7 +207,11 @@ int main(int argc, char *argv[])
     // Launch analyser in background
     analyzer->resizeImages( grabber.videoSize() );
     AnalyzerFunctor runAnalysis( *analyzer, cuContext, dpy, ctx );
-    boost::thread analysisThread( boost::ref(runAnalysis) );
+    boost::thread *analysisThread = NULL;
+    if(noThread == false)
+    {
+        analysisThread = new boost::thread( boost::ref(runAnalysis) );
+    }
     ComputationData *result = NULL;
     
     // Main XWindows event loop
@@ -361,10 +371,14 @@ int main(int argc, char *argv[])
 #else
                     analyzer->updateRightImageWithSDIVideo(grabber.stream2());
 #endif
-
                 }
 
                 analyzer->unlock();
+                if(noThread==true)
+                {
+                    analyzer->analyse();
+                }
+                
             }
 
             // Next frame
@@ -384,10 +398,14 @@ int main(int argc, char *argv[])
 #endif
     
     // Wait for thread to stop
-    analyzer->lock();
-    runAnalysis.stop();
-    analyzer->unlock();
-    analysisThread.join();
+    if(noThread==false)
+    {
+        analyzer->lock();
+        runAnalysis.stop();
+        analyzer->unlock();
+        analysisThread->join();
+        std::cout << "Using threaded analyzer" << std::endl;
+    }
 	delete analyzer;
 
     // Free screens

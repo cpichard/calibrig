@@ -107,10 +107,11 @@ void _checkLastError(const char * filename, const int linenum)
     
     if(err != cudaSuccess)
     {
-        std::cout << "CUDA Error : " << cudaGetErrorString(err) 
+        std::cout << "CUDA Error : " << cudaGetErrorString(err)
         << " in file " << filename
         << ", line " << linenum
-        << std::endl;     
+        << std::endl;
+        assert(0);
     }
         
 }

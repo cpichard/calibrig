@@ -69,7 +69,6 @@ void StereoAnalyzerGPU::acceptCommand( const Command &command )
     }
 }
 
-
 void StereoAnalyzerGPU::analyse()
 {
     if( m_imgWidth == 0 || m_imgHeight == 0 )

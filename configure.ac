@@ -1,6 +1,9 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+# TODO make tags with correct cuda tagging
+#ctags --langmap=c:+.cu --exclude=".pc" --recurse 
+
 AC_PREREQ(2.61)
 AC_INIT(CalibRig, 0.1, cyril.pichard@xxxxxx.xxx)
 #AC_CONFIG_SRCDIR([src/main.cpp])

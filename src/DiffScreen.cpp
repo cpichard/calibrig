@@ -148,6 +148,14 @@ void DiffScreen::updateResult()
 
 void DiffScreen::nextFrame()
 {
+    if(BufId(m_stream1)==BufId(m_stream2))
+    {
+        streamsToRGB(m_stream1, m_leftImg);
+        m_mon.updateWithImageBuffer(m_leftImg,4 );
+        return;
+    }
+
+
     // Convert to RGB
     streamsToRGB( m_stream1, m_leftImg  );
     streamsToRGB( m_stream2, m_rightImg );

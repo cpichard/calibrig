@@ -1,9 +1,8 @@
 
 #include "SurfHessian.h"
 
-#define BLOCKSIZE_X 16
+#define BLOCKSIZE_X 16 
 #define BLOCKSIZE_Y 8 
-
 
 // The following code was taken and adapted from SURFGPU :
 /* SURFGPU
@@ -86,13 +85,11 @@ void buildDetCUDA(float *g_img, float *g_det,
 	const float lap_sign = (Dxx + Dyy >= 0.0f ? 1.0f : -1.0f);
 
 	// Get the determinant of hessian response
-	float determinant = (Dxx * Dyy - 0.81f * Dxy * Dxy);
-	unsigned int cur_intvl = o * intervals + i;
-	unsigned int save_idx = cur_intvl * i_width * i_height + (r * i_width + c);
+	const float determinant = (Dxx * Dyy - 0.81f * Dxy * Dxy);
+	const unsigned int cur_intvl = o * intervals + i;
+	const unsigned int save_idx = cur_intvl * i_width * i_height + (r * i_width + c);
 	g_det[save_idx] = determinant < 0.0f ? 0.0f : lap_sign * determinant;
 }
-
-//-------------------------------------------------------
 
 /////////////////////////////////////////////////////////
 // Device functions
@@ -101,7 +98,7 @@ void buildDetCUDA(float *g_img, float *g_det,
 //! Computes the sum of pixels within the rectangle specified by the top-left start
 //! co-ordinate (row, col) and size (rows, cols).
 __device__
-float BoxIntegral(float *data, int width, int height, size_t widthStep,
+inline float BoxIntegral(float *data, int width, int height, size_t widthStep,
 	int row, int col, int rows, int cols)
 {
 	// The subtraction by one for row/col is because row/col is inclusive.
@@ -121,11 +118,11 @@ float BoxIntegral(float *data, int width, int height, size_t widthStep,
 // TODO : REFACTOR !!
 bool computeHessianDet( CudaImageBuffer<float> &img, CudaImageBuffer<float> &det, HessianData &params )
 {
-	// Calculate step size
-	int step = params.m_initSample;
+    // Calculate step size
+    int step = params.m_initSample;
 
-	// Get border size
-	int border = params.m_borderCache[0];
+    // Get border size
+    int border = params.m_borderCache[0];
 
     // REFACTOR : it should be in HessianData
     unsigned int total_num_intervals = params.m_intervals + (params.m_octaves - 1) * params.m_intervals / 2;
@@ -145,16 +142,11 @@ bool computeHessianDet( CudaImageBuffer<float> &img, CudaImageBuffer<float> &det
 			0, steps_x, steps_y, border, grid.x, grid.y, block.x, block.y, block.z);
 #endif
 
-    cudaThreadSynchronize();
-    //	TODO : cutilCheckMsg("buildDetCUDA_smem_bf() execution failed");
-
 	// For octaves > 0, we only compute the higher 2 intervals.
-	int intervals = 2; // dans le code original intervals est overridde int intervals = 2
-    // o was 1 and the function buildDetCUDA_smem_bf was enabled
-    // buildDetCUDA_smem_bf seems to be not adapted on a quaddro 4000
+	int intervals = 2; 
 	for (int o = 0; o < params.m_octaves; o++)
     {
-		// Calculate step size
+        // Calculate step size
 		step = params.m_initSample * (1 << o);
 
 		// Get border size
@@ -176,9 +168,7 @@ bool computeHessianDet( CudaImageBuffer<float> &img, CudaImageBuffer<float> &det
 			Width(img), Height(img), Width(img),
 			intervals, o, step, border);
         cudaThreadSynchronize();
-		//cutilCheckMsg("buildDetCUDA() execution failed");
 	}
-
     return false;
 }
 

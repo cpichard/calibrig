@@ -10,6 +10,7 @@
 
 void _checkError( CUresult err, const char * filename, const int linenum);
 void _checkLastError(const char * filename, const int linenum);
+
 bool cudaInitDevice(CUcontext &cuContext);
 void cudaReleaseDevice(CUcontext &cuContext);
 // GL Stuff
