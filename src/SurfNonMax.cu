@@ -391,7 +391,7 @@ bool computeNonMaxSuppression( CudaImageBuffer<float> &imgSat, HessianData &para
 			det_width_step, param.m_dPoints,
 			param.m_intervals, o, step, steps_i, border, param.m_thres, param.m_initSample);
 		//cutilCheckMsg("nonMaxCUDA() execution failed");
-        cudaThreadSynchronize();
+        cudaDeviceSynchronize();
 	}
 
     return true;

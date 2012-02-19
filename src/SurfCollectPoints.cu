@@ -98,7 +98,7 @@ bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data )
     dim3 grid(iDivUp(numPoints, 8));
     validatePoint<<<grid, threads>>>(h_data.m_dPoints, validatedPoints, numPoints);
     checkLastError();
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 
     // Scan
 	CUDPPConfiguration conf;
@@ -138,7 +138,7 @@ bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data )
     //std::cout << "found" << numPointFound << std::endl;
     // Compact - copy correct hessian to descriptors
     copyHessianToDescriptor<<<grid, threads>>> ( h_data.m_dPoints, d_data.m_descPoints, validatedPoints, newIndexes, numPointFound );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
     
     // Free temporary memory
@@ -162,7 +162,7 @@ bool collectHessianPoints( HessianData &h_data, DescriptorData &d_data )
 //    dim3 grid(iDivUp(hdata.capacity(), 8));
 //    CudaDevicePtrWrapper<ImageGL,uchar4*> imgPtr(image);
 //	drawPointuc<<<grid, threads>>>( hdata.m_dPoints, hdata.capacity(),(uchar4*)imgPtr, Width(image), Height(image), Width(image) );
-//    cudaThreadSynchronize();
+//    cudaDeviceSynchronize();
 //}
 
 
@@ -184,7 +184,7 @@ void drawPoints( HessianData &hdata, CudaImageBuffer<float> &image )
     dim3 grid(iDivUp(hdata.capacity(), 8));
 
 	drawPointf<<<grid, threads>>>( hdata.m_dPoints, hdata.capacity(),(float*)image, Width(image), Height(image), Width(image) );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 // Copy found points in ddata to a bound vertex buffer object
@@ -206,7 +206,7 @@ bool collectPoints( DescriptorData &ddata, VertexBufferObject &vbo, UInt2 &imgSi
     dim3 threads(8);
     dim3 grid(iDivUp(nbPointInDesc, 8));
     collectPointsf<<<grid, threads >>>(ddata.m_descPoints, (float2*)outDevicePtr, nbPointInDesc, (float)Width(imgSize), (float)Height(imgSize) );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
     return true;
 }
@@ -229,6 +229,6 @@ bool collectPoints( HessianData &hdata, VertexBufferObject &vbo, UInt2 &imgSize 
     dim3 grid(iDivUp(fsize, 8));
     collectPointsf<<<grid, threads >>>(hdata.m_dPoints, (float2*)outDevicePtr, fsize, (float)Width(imgSize), (float)Height(imgSize) );
     checkLastError();
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     return true;
 }

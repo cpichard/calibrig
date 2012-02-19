@@ -445,7 +445,7 @@ normalizeSURFDescriptorsGPU(SurfDescriptorPoint *d_ipoints, size_t num_ipoints)
 	dim3 block_grid(num_ipoints, 1);
 
 	normalizeSURFDescriptorsCUDA<<<block_grid, thread_block>>>(d_ipoints);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 //	cutilCheckMsg("normalizeSURFDescriptorsCUDA() execution failed");
 }
 
@@ -456,7 +456,7 @@ void detectIpointOrientationsGPU(
 	dim3 block_grid(num_ipoints, 1);
 
 	detectIpointOrientiationsCUDA<<<block_grid, thread_block>>>(d_ipoints);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 	//cutilCheckMsg("detectIpointOrientationsCUDA() execution failed");
 }
 
@@ -481,7 +481,7 @@ bool computeDescriptors( CudaImageBuffer<float> &imgSat, DescriptorData & desc )
     dim3 block_grid( NbElements(desc), 1); // Mouarf ca marchera jamais
 
     buildSURFDescriptorsCUDA<<<block_grid, thread_block>>>(desc.m_descPoints, upright);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     //cutilCheckMsg("buildSURFDescriptorsCUDA() execution failed");
 
     normalizeSURFDescriptorsGPU(desc.m_descPoints, desc.m_nbIPoints);

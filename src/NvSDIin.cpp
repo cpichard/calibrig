@@ -156,8 +156,8 @@ void CNvSDIin::setCaptureOptions(Display *display, const CaptureOptions &capture
 
 GLboolean CNvSDIin::initCaptureDeviceGL()
 {
-    GLXVideoCaptureDeviceNV *VideoInDevices;
-    unsigned int *VideoOutDevices;
+    GLXVideoCaptureDeviceNV *VideoInDevices=NULL;
+    unsigned int *VideoOutDevices=NULL;
     int numDevices = 0;
     //
     // I n i t i a l i z e  V i d e o  C a p t u r e  D e v i c e
@@ -183,7 +183,6 @@ GLboolean CNvSDIin::initCaptureDeviceGL()
 
     // Lock video capture device.
     glXLockVideoCaptureDeviceNV(dpy, m_hCaptureDevice);
-  
   
     // Bind video capture device to the current OpenGL rendering context.
     if( Success != glXBindVideoCaptureDeviceNV(dpy, m_videoSlot, m_hCaptureDevice))

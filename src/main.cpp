@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     HGPUNV *gpu = &gpuList[0];
     
     // Create window
-    GLXContext ctx;
+    GLXContext ctx=NULL;
     Window mainWin = createMainWindow( dpy, ctx, gpu->deviceXScreen, Width(winSize), Height(winSize) );
 
     // Register interest in the close window message
@@ -405,6 +405,8 @@ int main(int argc, char *argv[])
         analyzer->unlock();
         analysisThread->join();
         std::cout << "Using threaded analyzer" << std::endl;
+        delete analysisThread;
+        analysisThread = NULL;
     }
 	delete analyzer;
 

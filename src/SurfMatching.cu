@@ -116,7 +116,7 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     dim3 grid( iDivUp( nbLeftDesc, threadSize ), iDivUp( nbRightDesc, threadSize ) );
     computeSSD<<<grid, threads>>>( leftDesc.m_descPoints, rightDesc.m_descPoints, nbLeftDesc, nbRightDesc, (float*)ssdImage );
     checkLastError();
-    cudaThreadSynchronize();
+    //cudaDeviceSynchronize();
     checkLastError();
 
     // Select best matches
@@ -140,7 +140,7 @@ bool computeMatching( DescriptorData &leftDesc, DescriptorData &rightDesc,
     checkLastError();
     // at this point we get some pair of matching points
     // retrieve buffer on cpu memory
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 
     // resize points buffers to full capacity
     leftPts.resize(leftPts.capacity());

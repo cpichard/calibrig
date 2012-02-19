@@ -4,10 +4,6 @@
 
 void copyPoints( vector<CvPoint2D32f> &leftPts, vector<CvPoint2D32f> &rightPts, unsigned int nbRightDesc, MatchedPoints *matchedPoints_h, unsigned int &nbMatchedPoints  )
 {
-	// resize points buffers to full capacity
-	leftPts.resize(leftPts.capacity());
-	rightPts.resize(rightPts.capacity());
-
 	// Disambiguation of matches
 	MatchedPointSet matchedPointSet;
 	std::pair<MatchedPointSet::iterator,bool> insertOk;
@@ -15,6 +11,7 @@ void copyPoints( vector<CvPoint2D32f> &leftPts, vector<CvPoint2D32f> &rightPts, 
 	{
 	    if( matchedPoints_h[i].m_ratio < 0.6 )
 	    {
+            // Use of a map and a hash
             boost::hash<MatchedPoints> hasher;
             std::size_t key = hasher(matchedPoints_h[i]);
 
@@ -30,10 +27,13 @@ void copyPoints( vector<CvPoint2D32f> &leftPts, vector<CvPoint2D32f> &rightPts, 
 	    }
 	}
 
-	// copy results in pt1 and pt2
+	// Resize to numbers of found values
 	nbMatchedPoints = matchedPointSet.size();
+	leftPts.resize(nbMatchedPoints);
+	rightPts.resize(nbMatchedPoints);
+
+    // Copy points
 	MatchedPointSet::iterator it = matchedPointSet.begin();
-	//std::cout << "Matched points = " << matchedPoints << std::endl;
 	for( unsigned int i=0; i < nbMatchedPoints; i++, ++it )
 	{
 	    leftPts[i].x = it->second.m_lx;
@@ -41,9 +41,5 @@ void copyPoints( vector<CvPoint2D32f> &leftPts, vector<CvPoint2D32f> &rightPts, 
 	    rightPts[i].x = it->second.m_rx;
 	    rightPts[i].y = it->second.m_ry;
 	}
-
-	// Resize to numbers of found values
-	leftPts.resize(nbMatchedPoints);
-	rightPts.resize(nbMatchedPoints);
 }
 

@@ -406,7 +406,7 @@ cudaYCbYCrToRGBA( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH)
     dim3 grid(iDivUp(imageW/2, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
     
     YCbYCrToRGBA<<<grid, threads>>>( d_dst, d_src, imageW/2, imageH );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C" void
@@ -416,7 +416,7 @@ cudaGray1ToRGBA( uchar4 *d_dst, unsigned char *d_src, int imageW, int imageH )
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     Gray1ToRGBA<<<grid, threads>>>( d_dst, d_src, imageW, imageH );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 
@@ -441,7 +441,7 @@ void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, float 
 
     warpImage<<<grid, threads>>>( d_dst, imageW, imageH, matrix );
 
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     cudaUnbindTexture( tex );
 }
 
@@ -452,7 +452,7 @@ void cudaDiffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     diffRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imageW, imageH );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
@@ -462,7 +462,7 @@ void cudaDiffFromYCbYCr( uchar4 *d_dst, uchar4 *d_srcA, uchar4 *d_srcB, int imag
     dim3 grid(iDivUp(imageW/2, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     fromDiff<<<grid, threads>>>( d_dst, d_srcA, d_srcB, imageW/2, imageH );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
@@ -472,7 +472,7 @@ void cudaYCbYCrToY( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH )
     dim3 grid(iDivUp(imageW/2, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     YCbYCrToY<<<grid, threads>>>(d_dst, d_src, imageW/2, imageH);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
@@ -482,7 +482,7 @@ void cudaYToYCbYCr( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH )
     dim3 grid(iDivUp(imageW/2, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     YToYCbYCr<<<grid, threads>>>(d_dst, d_src, imageW/2, imageH);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
@@ -491,7 +491,7 @@ void cudaRGBAToFloat( float*outDevicePtr, uchar4*inDevicePtr, int imageW, int im
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
     RGBAtoFloat<<<grid, threads>>>(outDevicePtr,inDevicePtr,imageW,imageH,imageW);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
@@ -500,7 +500,7 @@ void cudaFloatToRGBA( uchar4*outDevicePtr, float*inDevicePtr, int imageW, int im
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
     FloatToRGBA<<<grid, threads>>>(outDevicePtr,inDevicePtr,imageW,imageH,imageW);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
@@ -520,7 +520,7 @@ cudaTranspose(
 		d_dst, dst_pitch / sizeof(float),
 		d_src, src_pitch / sizeof(float),
 		width, height);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 
 }
 
@@ -531,7 +531,7 @@ cudaRGBAtoCuda( float *outDevicePtr, uchar4 *inDevicePtr, unsigned int imageW, u
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
     RGBAtoFloat<<<grid, threads>>>(outDevicePtr,inDevicePtr,imageW,imageH, pitch);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 
@@ -542,7 +542,7 @@ cudaCudatoRGBA( uchar4 *outDevicePtr, float *inDevicePtr, unsigned int imageW, u
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
     FloatToRGBA<<<grid, threads>>>(outDevicePtr,inDevicePtr,imageW,imageH, pitch);
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 
@@ -553,5 +553,5 @@ cudaIntegrate( float *out, float *in, unsigned int width, unsigned int height, u
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(width, BLOCKDIM_X), iDivUp(height, BLOCKDIM_Y));
     Integrate<<<grid, threads>>>( out, in, width, height, pitch );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }

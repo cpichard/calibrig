@@ -39,7 +39,7 @@ void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
     convertRGBAToCudaBufferY( m_imgRight, m_satRightImage );
     checkLastError();
     m_rightImageIsNew = true;
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
@@ -52,7 +52,7 @@ void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
     convertRGBAToCudaBufferY( m_imgLeft, m_satLeftImage );
     checkLastError();
     m_leftImageIsNew = true;
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 void StereoAnalyzerGPU::acceptCommand( const Command &command )
@@ -100,7 +100,7 @@ void StereoAnalyzerGPU::analyse()
        m_result->m_leftMatchedPts, m_result->m_rightMatchedPts,
        Size(m_imgRight));
     checkLastError();
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     m_leftImageIsNew = m_rightImageIsNew = false;
 
     Deformation &d = m_result->m_d;
@@ -200,27 +200,27 @@ void StereoAnalyzerGPU::computeSurfDescriptors( CudaImageBuffer<float> &satImage
 {
     // Create integral image
     convertToIntegral( satImage );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
 
     // Compute hessian and determinants
     computeHessianDet( satImage, m_hesImage, m_hessianData );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
 
     // Find position of maximum values in determinant image
     computeNonMaxSuppression( m_hesImage, m_hessianData );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
 
     // Copy hessian points in descriptors
     collectHessianPoints( m_hessianData, descriptorsData );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
 
     // Compute Surf descriptors
     computeDescriptors( satImage, descriptorsData );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     checkLastError();
 }
 

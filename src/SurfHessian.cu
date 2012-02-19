@@ -167,7 +167,7 @@ bool computeHessianDet( CudaImageBuffer<float> &img, CudaImageBuffer<float> &det
 		buildDetCUDA<<<grid, block>>>((float *)img, params.m_det,
 			Width(img), Height(img), Width(img),
 			intervals, o, step, border);
-        cudaThreadSynchronize();
+        cudaDeviceSynchronize();
 	}
     return false;
 }

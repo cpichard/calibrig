@@ -13,11 +13,13 @@ int ScanHW(Display *dpy, HGPUNV * gpuList)
     int mask;
     int *pData;
     int len, j;
-    char *str;
+    char *str=NULL;
     bool ret;
+
     /* Get the number of gpus in the system */
     ret = XNVCTRLQueryTargetCount(dpy, NV_CTRL_TARGET_TYPE_GPU, &num_gpus);
-    if(!ret) {
+    if(!ret) 
+    {
         fprintf(stderr, "Failed to query number of gpus\n");
         return 1;
     }
@@ -33,7 +35,8 @@ int ScanHW(Display *dpy, HGPUNV * gpuList)
             0, // display_mask
             NV_CTRL_STRING_PRODUCT_NAME,
             &str);
-        if(!ret) {
+        if(!ret) 
+        {
             fprintf(stderr, "Failed to query gpu product name\n");
             return 1;
         }
@@ -47,18 +50,22 @@ int ScanHW(Display *dpy, HGPUNV * gpuList)
             NV_CTRL_BINARY_DATA_XSCREENS_USING_GPU,
             (unsigned char **) &pData,
             &len);
-        if(!ret) {
+        if(!ret) 
+        {
             fprintf(stderr, "Failed to query list of X Screens\n");
-            return 1;
+            exit(EXIT_FAILURE);
         }
         printf("   Number of X Screens on GPU %d    : %d\n", gpu, pData[0]);
         //only return GPUs that have XScreens
-        if(pData[0]) {
+        if(pData[0]) 
+        {
             gpuDevice.deviceXScreen = pData[1]; //chose the first screen
             strcpy(gpuDevice.deviceName, str);
             gpuList[gpu] = gpuDevice;
             num_gpusWithXScreen++;
         }
+        free(str);
+        str=NULL;
         XFree(pData);
     }
     return num_gpusWithXScreen;
