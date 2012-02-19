@@ -5,11 +5,7 @@ calibrig TODO file
 * add a scripting langage
 * write a "modular" compute engine aka gstreamer like
 * handle sdi disconnections properly
-* GPU mode : matched points in green
-
-== non annoying bugs ==
-* when the window is closed with the window manager, the desallocation isn't done
-  correctly
+* Values to zero when nothing is found
 
 == Code quality ==
 * check memory read/write valgrind
@@ -28,3 +24,4 @@ calibrig TODO file
 * extract code from irrelevant files
 * get replace surfgpu code
 * clean all gl code
+* remove analyser functor. Include it in the Analyser class
