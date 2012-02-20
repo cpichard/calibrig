@@ -6,14 +6,15 @@
 struct Deformation
 {
     Deformation()
-    :m_succeed(false)
-    ,m_rot(0)
-    ,m_tx(0)
-    ,m_ty(0)
-    ,m_scale(1)
-    ,m_nbPtsRight(0)
-    ,m_nbPtsLeft(0)
-    ,m_nbMatches(0)
+    : m_succeed(false)
+    , m_rot(0)
+    , m_tx(0)
+    , m_ty(0)
+    , m_scale(1)
+    , m_nbPtsRight(0)
+    , m_nbPtsLeft(0)
+    , m_nbMatches(0)
+    , m_mode("unknown")
     {
         // TODO memset ?
         for(unsigned int i=0; i < s_histogramBinSize; i++ )
@@ -35,6 +36,7 @@ struct Deformation
     unsigned int m_nbMatches;
     float m_hdisp[s_histogramBinSize]; // Horizontal disparity histogram
     float m_vdisp[s_histogramBinSize]; // Vertical disparity histogram
+    std::string m_mode;
 };
 
 #endif // __DEFORMATION_H__

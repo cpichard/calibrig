@@ -121,6 +121,7 @@ void StereoAnalyzerGPU::analyse()
     d.m_nbMatches = m_leftMatchedPts.size();
     d.m_nbPtsRight = NbElements(m_rightPoints);
     d.m_nbPtsLeft = NbElements(m_leftPoints);
+    d.m_mode = "GPU";
 
     // Compute homography descriptors for left and right images
     if( d.m_nbMatches > 8 )

@@ -44,7 +44,7 @@
 
 #define TEST 0
 
-const char *version = "06022012";
+const char *version = "20022012";
 
 int main(int argc, char *argv[])
 {
