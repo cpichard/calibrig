@@ -162,6 +162,10 @@ int main(int argc, char *argv[])
         XCloseDisplay(dpy);
         exit(EXIT_FAILURE);
     }
+    
+    cudaStream_t streams[2];
+    cudaStreamCreate(&streams[0]);
+    cudaStreamCreate(&streams[1]);
 
     // Screens
     QuadViewScreen  *screen1 = new QuadViewScreen( dpy, winSize );
@@ -426,6 +430,8 @@ int main(int argc, char *argv[])
 
     // ???
     //cudaReleaseDevice(cuContext);
+    cudaStreamDestroy(streams[0]);
+    cudaStreamDestroy(streams[1]);
 
     // Shutdown grabber
     grabber.shutdown();
