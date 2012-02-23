@@ -6,6 +6,7 @@ calibrig TODO file
 * write a "modular" compute engine aka gstreamer like
 * handle sdi disconnections properly
 * Values to zero when nothing is found
+* find driver version and check cuda compatibility at startup
 
 == Code quality ==
 * check memory read/write valgrind
