@@ -35,88 +35,28 @@
 #include "QuadViewScreen.h"
 #include "DiffScreen.h"
 #include "HistogramScreen.h"
-#include "Utils.h"
 #include "Grabber.h"
 #include "MainWindow.h"
 #include <boost/thread.hpp>
 #include "NetworkServer.h"
 #include "CommandStack.h"
+#include "ProgramOptions.h"
 
-#define TEST 1
 
 const char *version = "06022012";
 
 int main(int argc, char *argv[])
 {
-    std::cout << "calibrig v" << version << " - cpu + gpu beta" << std::endl;
-    std::cout << "Copyright (C) 2010-2012  C. Pichard"<< std::endl;
-    std::cout << "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl;
-    std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
-    std::cout << "under certain conditions; " << std::endl;
+    // Parse command line for program options
+    ProgramOptions po(argc, argv, version);
 
-    unsigned int serverPort = 8090;
-    bool useGPU = false;
-    bool noThread = false;
-    po::options_description desc("Allowed options");
-    desc.add_options()
-        ("help", "produce help message")
-        ("port", po::value<unsigned int>(), "server port")
-        ("gpu", "enable gpu computing")
-        ("nothread", "remove gpu multi threading ")
-    ;
-
-	// Parse command line
-    try {
-        po::variables_map vm;
-        po::store(po::parse_command_line(argc, argv, desc), vm);
-        po::notify(vm);
-
-        if( vm.count("help") )
-        {
-            std::cout << desc << "\n";
-            return 1;
-        }
-
-        if( vm.count("port") )
-        {
-            serverPort = vm["port"].as<unsigned int>();
-        }
-        else
-        {
-            std::cout << "Using port " << serverPort << std::endl;
-        }
-
-        if( vm.count("gpu") )
-        {
-            useGPU = true;
-        }
-        if( vm.count("nothread") )
-        {
-            noThread = true;
-        }
-    }
-
-    catch(std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-#if TEST
-    // Development, force use of GPU mode
-    //useGPU = true;
-#endif
-
-    // Value for the server
+    // Network server variables 
     SharedResult sharedResult;
     CommandStack commandStack;
     Command currentCommand;
-    NetworkServer server(sharedResult,commandStack,serverPort);
+    NetworkServer server(sharedResult, commandStack, po.m_serverPort);
     boost::thread t(boost::ref(server));
     
-    // Default window size 
-    const UInt2 winSize(1024,768);
-
     // Connect to X server
     Display *dpy = XOpenDisplay(NULL);
     if( dpy == NULL )
@@ -147,8 +87,9 @@ int main(int argc, char *argv[])
     HGPUNV *gpu = &gpuList[0];
     
     // Create window
+    // dpy -> GraphicRenderContext ? dpy + cuda + gl ?yy
     GLXContext ctx=NULL;
-    Window mainWin = createMainWindow( dpy, ctx, gpu->deviceXScreen, Width(winSize), Height(winSize) );
+    Window mainWin = createMainWindow( dpy, ctx, gpu->deviceXScreen, Width(po.m_winSize), Height(po.m_winSize) );
 
     // Register interest in the close window message
     Atom wmDeleteMessage = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
@@ -167,10 +108,12 @@ int main(int argc, char *argv[])
     cudaStreamCreate(&streams[0]);
     cudaStreamCreate(&streams[1]);
 
+    // dpy -> GraphicRenderContext ? dpy + cuda + gl ?yy
+
     // Screens
-    QuadViewScreen  *screen1 = new QuadViewScreen( dpy, winSize );
-    DiffScreen      *screen2 = new DiffScreen( dpy, winSize );
-    HistogramScreen *screen3 = new HistogramScreen( dpy, winSize );
+    QuadViewScreen  *screen1 = new QuadViewScreen( dpy, po.m_winSize );
+    DiffScreen      *screen2 = new DiffScreen( dpy, po.m_winSize );
+    HistogramScreen *screen3 = new HistogramScreen( dpy, po.m_winSize );
     ScreenLayout    *activeScreen = NULL;
     activeScreen = screen1;
 
@@ -202,7 +145,7 @@ int main(int argc, char *argv[])
     
     // Create an analyzer
     StereoAnalyzer *analyzer = NULL;
-    if(useGPU)
+    if(po.m_useGPU)
         analyzer = new StereoAnalyzerGPU();
     else
         analyzer = new StereoAnalyzerCPU();
@@ -212,7 +155,7 @@ int main(int argc, char *argv[])
     analyzer->resizeImages( grabber.videoSize() );
     AnalyzerFunctor runAnalysis( *analyzer, cuContext, dpy, ctx );
     boost::thread *analysisThread = NULL;
-    if(noThread == false)
+    if(po.m_noThread == false)
     {
         analysisThread = new boost::thread( boost::ref(runAnalysis) );
     }
@@ -378,7 +321,8 @@ int main(int argc, char *argv[])
                 }
 
                 analyzer->unlock();
-                if(noThread==true)
+                if(po.m_noThread==true)
+
                 {
                     analyzer->analyse();
                 }
@@ -402,7 +346,7 @@ int main(int argc, char *argv[])
 #endif
     
     // Wait for thread to stop
-    if(noThread==false)
+    if(po.m_noThread==false)
     {
         analyzer->lock();
         runAnalysis.stop();

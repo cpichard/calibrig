@@ -7,10 +7,6 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/program_options/option.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/program_options/parsers.hpp>
 #include "StereoAnalyzer.h"
 #include "CommandStack.h"
 
@@ -18,7 +14,6 @@ extern const char *version;
 
 using boost::asio::ip::tcp;
 
-namespace po = boost::program_options;
 
 class SharedResult
 {

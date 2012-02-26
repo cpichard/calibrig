@@ -58,5 +58,7 @@ CudaImageProcessing.cu\
 SurfMatchingExperimental.h\
 SurfMatchingExperimental.cu\
 HistogramScreen.h\
-HistogramScreen.cpp
+HistogramScreen.cpp\
+ProgramOptions.h\
+ProgramOptions.cpp
 
