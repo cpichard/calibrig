@@ -60,5 +60,7 @@ SurfMatchingExperimental.cu\
 HistogramScreen.h\
 HistogramScreen.cpp\
 ProgramOptions.h\
-ProgramOptions.cpp
+ProgramOptions.cpp\
+GraphicSystemX11.h\
+GraphicSystemX11.cpp
 

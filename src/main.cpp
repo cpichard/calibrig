@@ -36,12 +36,12 @@
 #include "DiffScreen.h"
 #include "HistogramScreen.h"
 #include "Grabber.h"
-#include "MainWindow.h"
 #include <boost/thread.hpp>
 #include "NetworkServer.h"
 #include "CommandStack.h"
 #include "ProgramOptions.h"
 
+#include "GraphicSystemX11.h"
 
 const char *version = "06022012";
 
@@ -56,51 +56,16 @@ int main(int argc, char *argv[])
     Command currentCommand;
     NetworkServer server(sharedResult, commandStack, po.m_serverPort);
     boost::thread t(boost::ref(server));
-    
-    // Connect to X server
-    Display *dpy = XOpenDisplay(NULL);
-    if( dpy == NULL )
-    {
-        std::cerr << "Couldn't find X11 display - existing" << std::endl;
-        exit(EXIT_FAILURE);
-    }
 
-    // Check system devices and configuration
-    if( checkSystem( dpy ) == false )
-    {
-        std::cerr << "Invalid devices - exiting" << std::endl;
-        XCloseDisplay(dpy);
-        exit(EXIT_FAILURE);
-    }
-
-    // Scan the systems for GPUs
-    HGPUNV gpuList[MAX_GPUS];
-    int	num_gpus = ScanHW( dpy, gpuList );
-    if( num_gpus < 1 )
-    {
-        std::cerr << "No GPU found - exiting" << std::endl;
-        XCloseDisplay(dpy);
-		exit(EXIT_FAILURE);
-    }
-
-    // Grab the first GPU for now for DVP
-    HGPUNV *gpu = &gpuList[0];
-    
-    // Create window
-    // dpy -> GraphicRenderContext ? dpy + cuda + gl ?yy
-    GLXContext ctx=NULL;
-    Window mainWin = createMainWindow( dpy, ctx, gpu->deviceXScreen, Width(po.m_winSize), Height(po.m_winSize) );
-
-    // Register interest in the close window message
-    Atom wmDeleteMessage = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(dpy, mainWin, &wmDeleteMessage, 1);
+    // Graphic system, X11, GPUs, GLX, basic window manager
+    GraphicSystemX11 gs(po.m_winSize);
 
     // Setup CUDA
     CUcontext cuContext;
     if( cudaInitDevice(cuContext) == false )
     {
         std::cerr << "No CUDA device available - exiting" << std::endl;
-        XCloseDisplay(dpy);
+        //XCloseDisplay(gs.m_display);
         exit(EXIT_FAILURE);
     }
     
@@ -108,17 +73,20 @@ int main(int argc, char *argv[])
     cudaStreamCreate(&streams[0]);
     cudaStreamCreate(&streams[1]);
 
-    // dpy -> GraphicRenderContext ? dpy + cuda + gl ?yy
+    // gs.m_display -> GraphicRenderContext ? gs.m_display + cuda + gl ?yy
 
     // Screens
-    QuadViewScreen  *screen1 = new QuadViewScreen( dpy, po.m_winSize );
-    DiffScreen      *screen2 = new DiffScreen( dpy, po.m_winSize );
-    HistogramScreen *screen3 = new HistogramScreen( dpy, po.m_winSize );
+    QuadViewScreen  *screen1 = new QuadViewScreen( gs.m_display, po.m_winSize );
+    DiffScreen      *screen2 = new DiffScreen( gs.m_display, po.m_winSize );
+    HistogramScreen *screen3 = new HistogramScreen( gs.m_display, po.m_winSize );
     ScreenLayout    *activeScreen = NULL;
     activeScreen = screen1;
 
+    // TODO :
+    //gs.addScreenLayout(screen1, screen2, screen3)
+
     // Create an image grabber
-    Grabber grabber(dpy, gpu, ctx);
+    Grabber grabber(gs.m_display, gs.m_gpu, gs.m_glxContext);
     if( grabber.init() )
     {
         screen1->resizeImage(grabber.videoSize());
@@ -153,7 +121,7 @@ int main(int argc, char *argv[])
     // Create a thread to run analysis on background
     // Launch analyser in background
     analyzer->resizeImages( grabber.videoSize() );
-    AnalyzerFunctor runAnalysis( *analyzer, cuContext, dpy, ctx );
+    AnalyzerFunctor runAnalysis( *analyzer, cuContext, gs.m_display, gs.m_glxContext );
     boost::thread *analysisThread = NULL;
     if(po.m_noThread == false)
     {
@@ -169,10 +137,13 @@ int main(int argc, char *argv[])
 
     while( bNotDone )
     {
+        // while( eventManager.continue() )
+        // graphicSystem.processX11Events()
+        // eventManager.dispatch()
         // flush all pending events
-        while(XPending(dpy))
+        while(XPending(gs.m_display))
         {
-            XNextEvent(dpy, &event);
+            XNextEvent(gs.m_display, &event);
 
             //printf("Event: %d\n", event.type);
             switch(event.type)
@@ -225,7 +196,7 @@ int main(int argc, char *argv[])
                   break;
                 case ClientMessage:
                   {
-                    if(event.xclient.data.l[0] == wmDeleteMessage)
+                    if(event.xclient.data.l[0] == gs.m_wmDeleteMessage)
                     {
                         bNotDone = false;    
                     }
@@ -336,7 +307,7 @@ int main(int argc, char *argv[])
         activeScreen->draw();
 
         // Swap buffer
-        glXSwapBuffers(dpy, mainWin);
+        glXSwapBuffers(gs.m_display, gs.m_mainWin);
 
     }
 
@@ -385,7 +356,7 @@ int main(int argc, char *argv[])
     t.join();
 
     // Disconnect from X server
-    XCloseDisplay( dpy );
+    //XCloseDisplay( gs.m_display );
 
     return EXIT_SUCCESS;
 }

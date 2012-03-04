@@ -22,6 +22,7 @@ struct AnalyzerFunctor
 
     void stop(){m_running=false;}
 
+    // Function launch by the thread
     void operator()()
     {
         // Create an OpenGL context for this thread
@@ -30,6 +31,9 @@ struct AnalyzerFunctor
         
         // Make this new GL context current
         glXMakeCurrent(m_dpy, win, ctx);
+       
+        // TODO : make the cuda stream current to the thread ?
+        //
         
         // Set the cuda context to this thread 
         cuCtxSetCurrent(m_cuContext);

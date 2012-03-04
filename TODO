@@ -20,7 +20,9 @@ calibrig TODO file
 * do not allocate results with new. Use a circular buffer for example
 
 == Refactoring ==
+use CUDA streams
 * improve command system
+* create and multithreaded event manager
 * use command pattern for the ui as well
 ** change page with a command
 * look at ghost interface
