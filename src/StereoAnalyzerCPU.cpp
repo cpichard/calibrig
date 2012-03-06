@@ -429,7 +429,7 @@ void StereoAnalyzerCPU::analyse()
     d.m_nbPtsRight = resultTmp->m_rightKeypoints->total;
     d.m_nbPtsLeft = resultTmp->m_leftKeypoints->total;
     d.m_nbMatches = 0;
-
+    d.m_mode = "CPU";
     // Compute homography
     if( findHomography( resultTmp->m_leftKeypoints, resultTmp->m_leftDescriptors,
                         resultTmp->m_rightKeypoints, resultTmp->m_rightDescriptors,

@@ -132,7 +132,8 @@ public:
             }
             else if( msgReceived.find("VERSION") != string::npos)
             {
-                sendVersion();    
+                makeVersionReply();
+                sendMessage();  
             }
             else
             {
@@ -195,18 +196,18 @@ public:
         m_msgToSend = str.str();
     }
 
+    void makeVersionReply()
+    {
+        Deformation d;
+        m_result.getResult( d );
+        std::stringstream str;
+        str << "{ \"version\":\"" << std::string(version) << "\", \"mode\":\"" << d.m_mode << "\" }";
+        m_msgToSend = str.str();
+    }
 
     void sendMessage()
     {
         boost::asio::async_write( m_socket, boost::asio::buffer(m_msgToSend),
-            boost::bind( &TcpConnection::handleWrite, shared_from_this(),
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred));
-    }
-
-    void sendVersion()
-    {
-        boost::asio::async_write( m_socket, boost::asio::buffer(std::string(version)),
             boost::bind( &TcpConnection::handleWrite, shared_from_this(),
                 boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred));

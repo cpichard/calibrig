@@ -1,0 +1,4 @@
+=== v20022012 ===
+* Bug fixes in the gpu mode, it should be more reliable
+* The version and mode are sent in a json format over the network
+
