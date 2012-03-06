@@ -35,7 +35,8 @@
 #include "QuadViewScreen.h"
 #include "DiffScreen.h"
 #include "HistogramScreen.h"
-#include "Grabber.h"
+#include "GrabberSDI.h"
+#include "GrabberTest.h"
 #include <boost/thread.hpp>
 #include "NetworkServer.h"
 #include "CommandStack.h"
@@ -65,7 +66,6 @@ int main(int argc, char *argv[])
     if( cudaInitDevice(cuContext) == false )
     {
         std::cerr << "No CUDA device available - exiting" << std::endl;
-        //XCloseDisplay(gs.m_display);
         exit(EXIT_FAILURE);
     }
     
@@ -86,23 +86,28 @@ int main(int argc, char *argv[])
     //gs.addScreenLayout(screen1, screen2, screen3)
 
     // Create an image grabber
-    Grabber grabber(gs.m_display, gs.m_gpu, gs.m_glxContext);
-    if( grabber.init() )
+    
+    Grabber *grabber=NULL;
+    
+    //grabber = new GrabberSDI(gs.m_display, gs.m_gpu, gs.m_glxContext);
+    grabber = new GrabberTest(gs.m_display, gs.m_gpu, gs.m_glxContext);
+    
+    if( grabber->init() )
     {
-        screen1->resizeImage(grabber.videoSize());
-        screen2->resizeImage(grabber.videoSize());
+        screen1->resizeImage(grabber->videoSize());
+        screen2->resizeImage(grabber->videoSize());
 
         // Set capture handle to all screens
-        activeScreen->setVideoStreams( grabber.stream1(), grabber.stream2() );
+        activeScreen->setVideoStreams( grabber->stream1(), grabber->stream2() );
     }
 
 #if TEST
     ImageGL m_YTmp;
     ImageGL m_warpedYTmp;
-    if( ! allocBufferAndTexture( m_YTmp, grabber.videoSize() ) )
+    if( ! allocBufferAndTexture( m_YTmp, grabber->videoSize() ) )
         return 0;
 
-    if( ! allocBufferAndTexture( m_warpedYTmp, grabber.videoSize() ) )
+    if( ! allocBufferAndTexture( m_warpedYTmp, grabber->videoSize() ) )
         return 0;
 
     // TODO : fill matrix and add matrix to warp function
@@ -120,7 +125,7 @@ int main(int argc, char *argv[])
 
     // Create a thread to run analysis on background
     // Launch analyser in background
-    analyzer->resizeImages( grabber.videoSize() );
+    analyzer->resizeImages( grabber->videoSize() );
     AnalyzerFunctor runAnalysis( *analyzer, cuContext, gs.m_display, gs.m_glxContext );
     boost::thread *analysisThread = NULL;
     if(po.m_noThread == false)
@@ -231,7 +236,7 @@ int main(int argc, char *argv[])
         }
 
         // Capture video
-        captureOK = grabber.captureVideo();
+        captureOK = grabber->captureVideo();
 
         // for now ....
         if( captureOK == false )
@@ -245,7 +250,7 @@ int main(int argc, char *argv[])
         {
             if(saveImages)
             {
-                grabber.saveImages();
+                grabber->saveImages();
                 saveImages = false;    
             }
 
@@ -273,11 +278,11 @@ int main(int argc, char *argv[])
                 if( analyzer->imagesAreNew() == false )
                 {
 
-                    analyzer->updateLeftImageWithSDIVideo (grabber.stream1());
+                    analyzer->updateLeftImageWithSDIVideo (grabber->stream1());
                     
 
 #if TEST            // Transform image for tests
-                    convertYCbYCrToY( grabber.stream2(), m_YTmp );
+                    convertYCbYCrToY( grabber->stream2(), m_YTmp );
                     matrix[0] = rand()%10*5;
                     matrix[1] = rand()%10*6;
                     matrix[2] = 1.f;//(rand()%10)*2.f/10.f;
@@ -287,7 +292,7 @@ int main(int argc, char *argv[])
                     convertYToYCbYCr(m_warpedYTmp,m_YTmp);
                     analyzer->updateRightImageWithSDIVideo (m_YTmp);
 #else
-                    analyzer->updateRightImageWithSDIVideo(grabber.stream2());
+                    analyzer->updateRightImageWithSDIVideo(grabber->stream2());
 #endif
                 }
 
@@ -349,7 +354,7 @@ int main(int argc, char *argv[])
     cudaStreamDestroy(streams[1]);
 
     // Shutdown grabber
-    grabber.shutdown();
+    grabber->shutdown();
 
     // Wait for result server to stop
     server.stop();

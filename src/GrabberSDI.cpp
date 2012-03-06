@@ -10,34 +10,25 @@
 
 #include "CudaUtils.h"
 
-#include "Grabber.h"
-#include "ImageProcessing.h"
+#include "GrabberSDI.h"
 #include <iostream>
 #include <ctime>
 
-Grabber::Grabber( Display *dpy, HGPUNV *gpu, GLXContext ctx )
-:m_dpy(dpy), 
-m_gpu(gpu),
-m_ctx(ctx),
-m_captureOptions(gpu->deviceXScreen),
-m_videoSize(0,0),
-m_stream1CaptureHandle(),
-m_stream2CaptureHandle(),
-m_sequenceNum(0),
-m_prevSequenceNum(0),
-m_numFails(0),
-m_state(OFFLINE)
+GrabberSDI::GrabberSDI( Display *dpy, HGPUNV *gpu, GLXContext ctx )
+: Grabber(dpy, gpu, ctx)
+, m_captureOptions(gpu->deviceXScreen)
+, m_sequenceNum(0)
+, m_prevSequenceNum(0)
+, m_numFails(0)
+, m_state(OFFLINE)
 {
     // Set capture options
     m_card.setCaptureOptions( m_dpy, m_captureOptions );
 }
 
-void Grabber::shutdown()
+void GrabberSDI::shutdown()
 {
     m_card.endCapture();
-
-    unregisterCudaBuffers();
-
     m_card.destroyCaptureDeviceNVCtrl();
     m_card.destroyCaptureDeviceGL();
 
@@ -52,7 +43,7 @@ void Grabber::shutdown()
 
 
 // State from OFFLINE to CAPTURE_STARTED
-bool Grabber::init()
+bool GrabberSDI::init()
 {
     // if the card has already be initialized
     if( m_state != OFFLINE )
@@ -70,9 +61,6 @@ bool Grabber::init()
     if( m_card.initInputDeviceGL() )
     {
         setupCardGL();
-
-        //
-        registerCudaBuffers();
 
         //
         selectStreams();
@@ -96,7 +84,7 @@ bool Grabber::init()
     return false;
 }
 
-GLenum Grabber::cardCaptureVideo( )
+GLenum GrabberSDI::cardCaptureVideo( )
 {
 	GLenum ret;
     static GLuint64EXT captureTime;
@@ -129,7 +117,7 @@ GLenum Grabber::cardCaptureVideo( )
     return ret;
 }
 
-bool Grabber::setupCardGL()
+bool GrabberSDI::setupCardGL()
 {
     // Claer buffers ?
     glClearColor( 0.0, 0.0, 0.0, 0.0);
@@ -143,27 +131,7 @@ bool Grabber::setupCardGL()
     return m_card.initCaptureDeviceGL();
 }
 
-void Grabber::registerCudaBuffers()
-{
-    // Register video buffers in cuda
-    //CUresult cerr;
-    //for( int i = 0; i < m_card.getNumStreams(); i++ )
-    //{
-    //    //cerr = cuGLRegisterBufferObject(m_card.getBufferObjectHandle(i));
-    //    //checkError(cerr);
-    //}
-}
-
-void Grabber::unregisterCudaBuffers()
-{
-    // release memory
-    //for( int i = 0; i < m_card.getNumStreams(); i++ )
-    //{
-    //    cuGLUnregisterBufferObject(m_card.getBufferObjectHandle(i));
-    //}
-}
-
-void Grabber::selectStreams()
+void GrabberSDI::selectStreams()
 {
     switch( m_card.getNumStreams() )
     {
@@ -185,9 +153,11 @@ void Grabber::selectStreams()
         SetBufId(m_stream2CaptureHandle, m_card.getBufferObjectHandle(1));
         SetSize(m_stream2CaptureHandle, m_videoSize);
     }
+
 }
 
-bool Grabber::captureVideo()
+
+bool GrabberSDI::captureVideo()
 {
     if( m_state == OFFLINE )
     {
@@ -204,9 +174,6 @@ bool Grabber::captureVideo()
         {
             //
             setupCardGL();
-
-            //
-            registerCudaBuffers();
 
             //
             selectStreams();
@@ -254,34 +221,4 @@ bool Grabber::captureVideo()
 
     return false;
 }
-
-void Grabber::saveImages()
-{
-    // Build filenames
-    char dateAndTime[16];
-    time_t tt = time(NULL);
-    struct tm *localTime = localtime (&tt);
-    strftime(dateAndTime, 16, "%m%d%y%H%M%S", localTime);
-    char hostname[64];
-    gethostname(hostname, 64);
-    
-    std::stringstream d1, d2;
-    d1 << "./snapshot_" << hostname << "_" << dateAndTime << "_1.dat";
-    d2 << "./snapshot_" << hostname << "_" << dateAndTime << "_2.dat";
-    
-    // Format machine date time stream   
-    saveGrabbedImage(m_stream1CaptureHandle, d1.str());
-    saveGrabbedImage(m_stream2CaptureHandle, d2.str());  
-    
-    // Save format : TODO : store values in NVSDIin.cpp
-    //std::stringstream t1, t2 ;
-    //t1 << "./snapshot_" << hostname << "_" << dateAndTime << "_1.txt";
-    //t2 << "./snapshot_" << hostname << "_" << dateAndTime << "_2.txt";
-    //decodeSignalFormat
-    //decodeComponentSampling
-    //decodeBitsPerComponent
-    //decodeColorSpace
-}
-
-
 

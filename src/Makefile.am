@@ -22,6 +22,8 @@ DiffScreen.h DiffScreen.cpp\
 CudaUtils.h CudaUtils.cpp\
 Utils.h Utils.cpp\
 ImageGL.h ImageGL.cpp\
+GrabberSDI.h GrabberSDI.cpp\
+GrabberTest.h GrabberTest.cpp\
 Grabber.h Grabber.cpp\
 MainWindow.h MainWindow.cpp\
 Deformation.h\
