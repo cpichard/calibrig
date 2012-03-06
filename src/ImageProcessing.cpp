@@ -251,7 +251,7 @@ bool saveGrabbedImage( ImageGL &img, const std::string &fileName )
         return false;    
     }
     
-    size_t bufferSize = sizeof(unsigned char)*Width(img)*Height(img)/2;
+    size_t bufferSize = 4*sizeof(unsigned char)*Width(img)*Height(img)/2;
     unsigned char *buffer = (unsigned char *)malloc(bufferSize);
     glBindBufferARB( GL_VIDEO_BUFFER_NV, BufId(img) );
     assert(glGetError() == GL_NO_ERROR);
