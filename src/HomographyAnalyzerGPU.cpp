@@ -115,7 +115,7 @@ void HomographyAnalyzerGPU::analyse()
         CvMat _pt1, _pt2;
         _pt1 = cvMat(1, d.m_nbMatches, CV_32FC2, &m_result->m_leftMatchedPts[0] );
         _pt2 = cvMat(1, d.m_nbMatches, CV_32FC2, &m_result->m_rightMatchedPts[0] );
-        CvMat _h = cvMat(3, 3, CV_64F, d.m_h);
+        CvMat _h = cvMat(3, 3, CV_64F, d.m_h1);
         if( cvFindHomography( &_pt1, &_pt2, &_h, CV_LMEDS, 1.0 ) )
         {
             // Simple decomposition

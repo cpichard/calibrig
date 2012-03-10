@@ -7,6 +7,10 @@
 #include <iomanip>
 #include <iostream>
 
+// PI
+#include <boost/math/constants/constants.hpp>
+const float PI_FLOAT = boost::math::constants::pi<float>();
+
 using std::vector;
 
 // Utility
@@ -433,11 +437,11 @@ void HomographyAnalyzerCPU::analyse()
     // Compute homography
     if( findHomography( resultTmp->m_leftKeypoints, resultTmp->m_leftDescriptors,
                         resultTmp->m_rightKeypoints, resultTmp->m_rightDescriptors,
-                        d.m_h, resultTmp->m_ptpairs ) )
+                        d.m_h1, resultTmp->m_ptpairs ) )
     {
         //std::cout << "Found Homography" << std::endl;
-        CvMat H = cvMat(3, 3, CV_64F, d.m_h);
-
+        CvMat H = cvMat(3, 3, CV_64F, d.m_h1);
+        // TODO : H2 with indentity matrix
         // Simple decomposition
         double Tx = cvmGet(&H,0,2);
         double Ty = cvmGet(&H,1,2);
@@ -449,7 +453,7 @@ void HomographyAnalyzerCPU::analyse()
         d.m_tx = Tx*(float)m_imgWidth;
         d.m_ty = -Ty*(float)m_imgWidth;
         d.m_scale = scale;
-        d.m_rot = rot*180.f/3.14; // approx
+        d.m_rot = rot*180.f/PI_FLOAT; 
         d.m_succeed = true;
         d.m_nbPtsRight = resultTmp->m_rightKeypoints->total;
         d.m_nbPtsLeft = resultTmp->m_leftKeypoints->total;

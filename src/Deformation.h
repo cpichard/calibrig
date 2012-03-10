@@ -25,7 +25,9 @@ struct Deformation
     
     static const unsigned int s_histogramBinSize = 64;
 
-    double m_h[9];
+    double m_h1[9]; // Homography first image
+    double m_h2[9]; // Homography second image
+    double m_f[9];  // Fundamental matrix
     bool m_succeed;
     double m_rot;
     double m_tx;

@@ -42,7 +42,7 @@ public:
     // TESTING PURPOSE
     void setTransform(float tx, float ty, float scale, float rot );
 
-private:
+protected:
     void updateImageWithSDIVideo( ImageGL &videoPBO, IplImage * );
     //void saveImage ( IplImage *img, const std::string &filename );
     

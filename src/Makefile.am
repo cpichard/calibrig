@@ -16,6 +16,7 @@ Monitor.h Monitor.cpp\
 StereoAnalyzer.h StereoAnalyzer.cpp\
 HomographyAnalyzerCPU.h HomographyAnalyzerCPU.cpp\
 HomographyAnalyzerGPU.h HomographyAnalyzerGPU.cpp\
+FMatrixAnalyzerCPU.h FMatrixAnalyzerCPU.cpp\
 ScreenLayout.h ScreenLayout.cpp\
 QuadViewScreen.h QuadViewScreen.cpp\
 DiffScreen.h DiffScreen.cpp\
