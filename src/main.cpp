@@ -24,8 +24,8 @@
 #include <cstdlib>
 
 #include "AnalyzerFunctor.h"
-#include "StereoAnalyzerCPU.h"
-#include "StereoAnalyzerGPU.h"
+#include "HomographyAnalyzerCPU.h"
+#include "HomographyAnalyzerGPU.h"
 #include "NvSDIin.h"
 
 #include "ImageProcessing.h"
@@ -45,6 +45,7 @@
 #include "GraphicSystemX11.h"
 
 const char *version = "20022012";
+
 
 int main(int argc, char *argv[])
 {
@@ -88,7 +89,6 @@ int main(int argc, char *argv[])
     // Create an image grabber
     
     Grabber *grabber=NULL;
-    
     //grabber = new GrabberSDI(gs.m_display, gs.m_gpu, gs.m_glxContext);
     grabber = new GrabberTest(gs.m_display, gs.m_gpu, gs.m_glxContext);
     
@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
     // Create an analyzer
     StereoAnalyzer *analyzer = NULL;
     if(po.m_useGPU)
-        analyzer = new StereoAnalyzerGPU();
+        analyzer = new HomographyAnalyzerGPU();
     else
-        analyzer = new StereoAnalyzerCPU();
+        analyzer = new HomographyAnalyzerCPU();
 
     // Create a thread to run analysis on background
     // Launch analyser in background
@@ -279,7 +279,6 @@ int main(int argc, char *argv[])
                 {
 
                     analyzer->updateLeftImageWithSDIVideo (grabber->stream1());
-                    
 
 #if TEST            // Transform image for tests
                     convertYCbYCrToY( grabber->stream2(), m_YTmp );

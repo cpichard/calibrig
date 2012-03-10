@@ -1,4 +1,4 @@
-#include "StereoAnalyzerCPU.h"
+#include "HomographyAnalyzerCPU.h"
 
 #include "NvSDIin.h"
 
@@ -26,8 +26,8 @@ void printMat( std::string T, CvMat *H, int r, int c )
 }
 
 // Constructor
-StereoAnalyzerCPU::StereoAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
-:StereoAnalyzer( nbChannelsInSDIVideo )
+HomographyAnalyzerCPU::HomographyAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
+: StereoAnalyzer( nbChannelsInSDIVideo )
 , m_imgWidth(0)
 , m_imgHeight(0)
 , m_surfThreshold(500)
@@ -45,7 +45,7 @@ StereoAnalyzerCPU::StereoAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
     cvSetIdentity(m_warpMatrix);
 }
 
-StereoAnalyzerCPU::~StereoAnalyzerCPU()
+HomographyAnalyzerCPU::~HomographyAnalyzerCPU()
 {
     // Release OpenCV images
     freeImages( );
@@ -58,27 +58,27 @@ StereoAnalyzerCPU::~StereoAnalyzerCPU()
     }
 }
 
-void StereoAnalyzerCPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
+void HomographyAnalyzerCPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
 {
     boost::mutex::scoped_lock sl(m_imgMutex);
     updateImageWithSDIVideo(videoPBO, m_imgRight); 
     m_rightImageIsNew = true;
 }
 
-void StereoAnalyzerCPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
+void HomographyAnalyzerCPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
 {
     boost::mutex::scoped_lock sl(m_imgMutex);
     updateImageWithSDIVideo(videoPBO, m_imgLeft ); 
     m_leftImageIsNew = true;
 }
 
-void StereoAnalyzerCPU::resizeImages( UInt2 imgSize )
+void HomographyAnalyzerCPU::resizeImages( UInt2 imgSize )
 {
     freeImages();
     allocImages( imgSize );
 }
 
-void StereoAnalyzerCPU::allocImages( UInt2 imgSize )
+void HomographyAnalyzerCPU::allocImages( UInt2 imgSize )
 {
     m_imgWidth = Width(imgSize);
     m_imgHeight = Height(imgSize);
@@ -113,7 +113,7 @@ void StereoAnalyzerCPU::allocImages( UInt2 imgSize )
     cvmSet( m_fromNormMatrix, 2, 2, 1.0/L);
 }
 
-void StereoAnalyzerCPU::freeImages( )
+void HomographyAnalyzerCPU::freeImages( )
 {
     if( m_imgRight )
     {
@@ -143,7 +143,7 @@ void StereoAnalyzerCPU::freeImages( )
 }
 
 
-void StereoAnalyzerCPU::acceptCommand( const Command &command )
+void HomographyAnalyzerCPU::acceptCommand( const Command &command )
 {
     if( command.m_action == "OCVTHRESHOLD" )
     {
@@ -166,7 +166,7 @@ void StereoAnalyzerCPU::acceptCommand( const Command &command )
 //    }
 //}
 
-void StereoAnalyzerCPU::updateImageWithSDIVideo( ImageGL &videoPBO, IplImage *ocvImg )
+void HomographyAnalyzerCPU::updateImageWithSDIVideo( ImageGL &videoPBO, IplImage *ocvImg )
 {
     if( m_imgWidth == 0 || m_imgHeight == 0 )
         return;
@@ -206,7 +206,7 @@ void StereoAnalyzerCPU::updateImageWithSDIVideo( ImageGL &videoPBO, IplImage *oc
 }
 
 // TESTING PURPOSE
-void StereoAnalyzerCPU::setTransform(float tx, float ty, float scale, float rot )
+void HomographyAnalyzerCPU::setTransform(float tx, float ty, float scale, float rot )
 {
     // Create transform mat
     CvMat *transform = cvCreateMat(3,3,CV_64FC1);
@@ -367,7 +367,7 @@ findHomography( const CvSeq* rightKeypoints, const CvSeq* rightDescriptors,
 }
 
 // Launch analysis and return
-void StereoAnalyzerCPU::analyse()
+void HomographyAnalyzerCPU::analyse()
 {
     m_leftImageIsNew = m_rightImageIsNew = false;
 
@@ -462,7 +462,7 @@ void StereoAnalyzerCPU::analyse()
     }
 }
 
-void StereoAnalyzerCPU::computeDisparity()
+void HomographyAnalyzerCPU::computeDisparity()
 {
     if( m_result )
     {

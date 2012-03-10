@@ -1,4 +1,4 @@
-#include "StereoAnalyzerGPU.h"
+#include "HomographyAnalyzerGPU.h"
 #include "ComputationDataGPU.h"
 #include "CudaUtils.h"
 
@@ -11,7 +11,7 @@
 
 #include "ImageProcessing.h"
 
-StereoAnalyzerGPU::StereoAnalyzerGPU()
+HomographyAnalyzerGPU::HomographyAnalyzerGPU()
 : StereoAnalyzer()
 , m_hessianData()
 , m_rightDescriptors()
@@ -22,14 +22,14 @@ StereoAnalyzerGPU::StereoAnalyzerGPU()
 , m_toDispose(NULL)
 {}
 
-StereoAnalyzerGPU::~StereoAnalyzerGPU()
+HomographyAnalyzerGPU::~HomographyAnalyzerGPU()
 {
     if(m_result)
         delete m_result;
     freeImages();
 }
 
-void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
+void HomographyAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
 {
     boost::mutex::scoped_lock sl(m_imgMutex);
     convertYCbYCrToY(videoPBO, m_imgRight ); 
@@ -42,7 +42,7 @@ void StereoAnalyzerGPU::updateRightImageWithSDIVideo( ImageGL &videoPBO )
     cudaDeviceSynchronize();
 }
 
-void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
+void HomographyAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
 {
     boost::mutex::scoped_lock sl(m_imgMutex);
     convertYCbYCrToY(videoPBO, m_imgLeft ); 
@@ -55,7 +55,7 @@ void StereoAnalyzerGPU::updateLeftImageWithSDIVideo ( ImageGL &videoPBO )
     cudaDeviceSynchronize();
 }
 
-void StereoAnalyzerGPU::acceptCommand( const Command &command )
+void HomographyAnalyzerGPU::acceptCommand( const Command &command )
 {
     if( command.m_action == "OCVTHRESHOLD" )
     {
@@ -69,7 +69,7 @@ void StereoAnalyzerGPU::acceptCommand( const Command &command )
     }
 }
 
-void StereoAnalyzerGPU::analyse()
+void HomographyAnalyzerGPU::analyse()
 {
     if( m_imgWidth == 0 || m_imgHeight == 0 )
         return;
@@ -141,7 +141,7 @@ void StereoAnalyzerGPU::analyse()
     }
 }
 
-void StereoAnalyzerGPU::resizeImages( UInt2 imgSize )
+void HomographyAnalyzerGPU::resizeImages( UInt2 imgSize )
 {
     freeImages();
     allocImages( imgSize );
@@ -149,7 +149,7 @@ void StereoAnalyzerGPU::resizeImages( UInt2 imgSize )
     m_hessianData.resizeImages(imgSize);
 }
 
-void StereoAnalyzerGPU::allocImages( UInt2 imgSize )
+void HomographyAnalyzerGPU::allocImages( UInt2 imgSize )
 {
     m_imgWidth = Width(imgSize);
     m_imgHeight = Height(imgSize);
@@ -183,7 +183,7 @@ void StereoAnalyzerGPU::allocImages( UInt2 imgSize )
 
 }
 
-void StereoAnalyzerGPU::freeImages()
+void HomographyAnalyzerGPU::freeImages()
 {
     m_hessianData.freeImages();
     releaseBuffer( m_hesImage );
@@ -197,7 +197,7 @@ void StereoAnalyzerGPU::freeImages()
     checkLastError();
 }
 
-void StereoAnalyzerGPU::computeSurfDescriptors( CudaImageBuffer<float> &satImage, DescriptorData &descriptorsData )
+void HomographyAnalyzerGPU::computeSurfDescriptors( CudaImageBuffer<float> &satImage, DescriptorData &descriptorsData )
 {
     // Create integral image
     convertToIntegral( satImage );
@@ -225,7 +225,7 @@ void StereoAnalyzerGPU::computeSurfDescriptors( CudaImageBuffer<float> &satImage
     checkLastError();
 }
 
-ComputationData * StereoAnalyzerGPU::acquireLastResult()
+ComputationData * HomographyAnalyzerGPU::acquireLastResult()
 {
     ComputationData *ret = NULL;
     ret = m_result;
@@ -233,13 +233,13 @@ ComputationData * StereoAnalyzerGPU::acquireLastResult()
     return ret;
 }
 
-void StereoAnalyzerGPU::disposeResult(ComputationData *toDispose)
+void HomographyAnalyzerGPU::disposeResult(ComputationData *toDispose)
 {
     m_toDispose = (ComputationDataGPU*)toDispose;
 }
 
 
-void StereoAnalyzerGPU::computeDisparity()
+void HomographyAnalyzerGPU::computeDisparity()
 {
     if( m_result && Width(m_imgLeft) > 0 )
     {

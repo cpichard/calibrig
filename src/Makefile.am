@@ -14,8 +14,8 @@ NvSDIin.h NvSDIin.cpp \
 NvSDIutils.h NvSDIutils.cpp \
 Monitor.h Monitor.cpp\
 StereoAnalyzer.h StereoAnalyzer.cpp\
-StereoAnalyzerCPU.h StereoAnalyzerCPU.cpp\
-StereoAnalyzerGPU.h StereoAnalyzerGPU.cpp\
+HomographyAnalyzerCPU.h HomographyAnalyzerCPU.cpp\
+HomographyAnalyzerGPU.h HomographyAnalyzerGPU.cpp\
 ScreenLayout.h ScreenLayout.cpp\
 QuadViewScreen.h QuadViewScreen.cpp\
 DiffScreen.h DiffScreen.cpp\

@@ -1,5 +1,5 @@
-#ifndef __STEREOANALYZERCPU_H__
-#define __STEREOANALYZERCPU_H__
+#ifndef __HOMOGRAPHYANALYZERCPU_H__
+#define __HOMOGRAPHYANALYZERCPU_H__
 
 #include "cv.h"
 #include "highgui.h"
@@ -17,12 +17,12 @@
 #include "StereoAnalyzer.h"
 
 // TODO : rename to StereoAnalyZerCPU
-class StereoAnalyzerCPU : public StereoAnalyzer
+class HomographyAnalyzerCPU : public StereoAnalyzer
 {
 public:
     // Constructor
-    StereoAnalyzerCPU( unsigned int nbChannelsInSDIVideo=2 );
-    ~StereoAnalyzerCPU();
+    HomographyAnalyzerCPU( unsigned int nbChannelsInSDIVideo=2 );
+    ~HomographyAnalyzerCPU();
 
     // Update left and right images
     virtual void updateRightImageWithSDIVideo( ImageGL &videoPBO );

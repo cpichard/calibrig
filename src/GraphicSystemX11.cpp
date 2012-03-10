@@ -31,7 +31,7 @@ GraphicSystemX11::GraphicSystemX11(UInt2 windowSize)
     // TODO XSetWMProtocols(m_display, mainWin, &wmDeleteMessage, 1);
 
     checkSystem();
-    
+  
     // Grab the first GPU for now for DVP
     m_gpu = &(m_gpuList[0]);
     

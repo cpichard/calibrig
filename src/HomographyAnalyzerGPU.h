@@ -1,5 +1,5 @@
-#ifndef __STEREOANALYZERGPU_H__
-#define __STEREOANALYZERGPU_H__
+#ifndef __HOMOGRAPHYANALYZERGPU_H___
+#define __HOMOGRAPHYANALYZERGPU_H___ 
 
 #include "StereoAnalyzer.h"
 #include "SurfGPUData.h"
@@ -7,11 +7,12 @@
 #include "SurfDescriptor.h"
 #include "SurfCollectPoints.h"
 #include "ComputationDataGPU.h"
-class StereoAnalyzerGPU : public StereoAnalyzer
+
+class HomographyAnalyzerGPU : public StereoAnalyzer
 {
 public:
-    StereoAnalyzerGPU();
-    virtual ~StereoAnalyzerGPU();
+    HomographyAnalyzerGPU();
+    virtual ~HomographyAnalyzerGPU();
     
     void updateRightImageWithSDIVideo( ImageGL &videoPBO );
     void updateLeftImageWithSDIVideo ( ImageGL &videoPBO );
@@ -57,5 +58,5 @@ private:
     float                       m_sentThreshold;
 };
 
-#endif // __STEREOANALYSERGPU_H__
+#endif // __HOMOGRAPHYANALYZERGPU_H__ 
 
