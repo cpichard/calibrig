@@ -26,6 +26,7 @@
 #include "AnalyzerFunctor.h"
 #include "HomographyAnalyzerCPU.h"
 #include "HomographyAnalyzerGPU.h"
+#include "FMatrixAnalyzerCPU.h"
 #include "NvSDIin.h"
 
 #include "ImageProcessing.h"
@@ -35,6 +36,7 @@
 #include "QuadViewScreen.h"
 #include "DiffScreen.h"
 #include "HistogramScreen.h"
+#include "VisualComfortScreen.h"
 #include "GrabberSDI.h"
 #include "GrabberTest.h"
 #include <boost/thread.hpp>
@@ -80,6 +82,8 @@ int main(int argc, char *argv[])
     QuadViewScreen  *screen1 = new QuadViewScreen( gs.m_display, po.m_winSize );
     DiffScreen      *screen2 = new DiffScreen( gs.m_display, po.m_winSize );
     HistogramScreen *screen3 = new HistogramScreen( gs.m_display, po.m_winSize );
+    VisualComfortScreen *screen4 = new VisualComfortScreen( gs.m_display, po.m_winSize );
+
     ScreenLayout    *activeScreen = NULL;
     activeScreen = screen1;
 
@@ -96,6 +100,8 @@ int main(int argc, char *argv[])
     {
         screen1->resizeImage(grabber->videoSize());
         screen2->resizeImage(grabber->videoSize());
+        screen3->resizeImage(grabber->videoSize());
+        screen4->resizeImage(grabber->videoSize());
 
         // Set capture handle to all screens
         activeScreen->setVideoStreams( grabber->stream1(), grabber->stream2() );
@@ -112,16 +118,16 @@ int main(int argc, char *argv[])
 
     // TODO : fill matrix and add matrix to warp function
     float matrix[9];
-    float *d_matrix; // device matrix
-    cudaMalloc((void**)&d_matrix, sizeof(float)*9);
 #endif
     
     // Create an analyzer
     StereoAnalyzer *analyzer = NULL;
-    if(po.m_useGPU)
-        analyzer = new HomographyAnalyzerGPU();
-    else
-        analyzer = new HomographyAnalyzerCPU();
+    //if(po.m_useGPU)
+    //    analyzer = new HomographyAnalyzerGPU();
+    //else
+    //    analyzer = new HomographyAnalyzerCPU();
+
+    analyzer = new FMatrixAnalyzerCPU();
 
     // Create a thread to run analysis on background
     // Launch analyser in background
@@ -182,6 +188,11 @@ int main(int argc, char *argv[])
                     if( kpe->keycode == 12 ) 
                     {
                         activeScreen = screen3;
+                    }
+                    // Key_4
+                    if( kpe->keycode == 13 ) 
+                    {
+                        activeScreen = screen4;
                     }
                     //std::cout << "KeyPress = " << kpe->keycode << std::endl;
 
@@ -286,8 +297,7 @@ int main(int argc, char *argv[])
                     matrix[1] = rand()%10*6;
                     matrix[2] = 1.f;//(rand()%10)*2.f/10.f;
                     //std::cout << "matrix = " << matrix[0] << std::endl;
-                    cudaMemcpy(d_matrix, matrix, sizeof(float)*9, cudaMemcpyHostToDevice);
-                    warpImage(m_YTmp, m_warpedYTmp, d_matrix );
+                    warpImage(m_YTmp, m_warpedYTmp, matrix );
                     convertYToYCbYCr(m_warpedYTmp,m_YTmp);
                     analyzer->updateRightImageWithSDIVideo (m_YTmp);
 #else
@@ -358,9 +368,6 @@ int main(int argc, char *argv[])
     // Wait for result server to stop
     server.stop();
     t.join();
-
-    // Disconnect from X server
-    //XCloseDisplay( gs.m_display );
 
     return EXIT_SUCCESS;
 }
