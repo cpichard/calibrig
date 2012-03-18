@@ -24,7 +24,7 @@ int iDivUp(int a, int b)
 // TODO deformation
 // At the moment this function is only used for testing
 __global__
-void warpImage( uchar4 *d_dst, int imageW, int imageH, float matrix[9] )
+void cuWarpImage( uchar4 *d_dst, int imageW, int imageH, double matrix[9] )
 {
     // Position in dest image
     const int ix = blockDim.x * blockIdx.x + threadIdx.x;
@@ -33,16 +33,22 @@ void warpImage( uchar4 *d_dst, int imageW, int imageH, float matrix[9] )
     // Position in src image
     if( ix < imageW && iy < imageH )
     {
-
         // Warp is only used for TESTING purposes
         unsigned int pos = ix + iy*imageW;
+        const float fx = float(ix);
+        const float fy = float(iy);
+
+        const float tu = fx*float(matrix[0]) +fy*float(matrix[1]) + float(matrix[2]);
+        const float tv = fx*float(matrix[3]) +fy*float(matrix[4]) + float(matrix[5]);
+        const float tw = fx*float(matrix[6]) +fy*float(matrix[7]) + float(matrix[8]); 
         
-        float tu = ix+matrix[0];//float(ix)*cos(0.1) - float(iy)*sin(0.1) +10;
-        float tv = iy+matrix[1];//float(ix)*sin(0.1) + float(iy)*cos(0.1);
-        uchar4 col =  tex2D( tex, tu, tv ); 
-        const float R = (float)col.x*matrix[2];
-        const float G = (float)col.y*matrix[2];
-        const float B = (float)col.z*matrix[2];
+        const float u = tu/tw;
+        const float v = tv/tw;
+        
+        const uchar4 col = tex2D( tex, u, v ); 
+        const float R = (float)col.x;
+        const float G = (float)col.y;
+        const float B = (float)col.z;
         d_dst[ pos ].x = (unsigned char)( R > 0 ) ? ( ( R <=255 ) ? R : 255 ): 0 ;
         d_dst[ pos ].y = (unsigned char)( G > 0 ) ? ( ( G <=255 ) ? G : 255 ): 0 ;
         d_dst[ pos ].z = (unsigned char)( B > 0 ) ? ( ( B <=255 ) ? B : 255 ): 0 ;
@@ -422,11 +428,11 @@ cudaGray1ToRGBA( uchar4 *d_dst, unsigned char *d_src, int imageW, int imageH )
 
 
 extern "C"
-void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, float matrix[9] )
+void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, double matrix[9] )
 {
-    size_t offset;
+    size_t offset=0;
 
-	tex.filterMode = cudaFilterModePoint; // We don't use interpolation (intepo impossible with uchar)
+	tex.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
 	tex.normalized = false; // Don't normalize texture coordinates
 	/* Clamping saves us some boundary checks */
 	tex.addressMode[0] = cudaAddressModeClamp;
@@ -439,8 +445,21 @@ void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, float 
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
-    warpImage<<<grid, threads>>>( d_dst, imageW, imageH, matrix );
+    //matrix[0] = 1;
+    //matrix[1] = 0;
+    //matrix[2] = 0;
+    //matrix[3] = 0;
+    //matrix[4] = 1;
+    //matrix[5] = 0;
+    //matrix[6] = 0;
+    //matrix[7] = 0;
+    //matrix[8] = 1;
 
+    double *d_matrix; // device matrix
+    cudaMalloc((void**)&d_matrix, sizeof(double)*9);
+    cudaMemcpy(d_matrix, matrix, sizeof(double)*9, cudaMemcpyHostToDevice);
+    cuWarpImage<<<grid, threads>>>( d_dst, imageW, imageH, d_matrix );
+    cudaFree(d_matrix);
     cudaDeviceSynchronize();
     cudaUnbindTexture( tex );
 }

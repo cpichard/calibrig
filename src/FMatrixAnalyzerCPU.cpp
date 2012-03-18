@@ -1,11 +1,12 @@
 #include "FMatrixAnalyzerCPU.h"
 
 #include "NvSDIin.h"
-
+#include "RectificationV120.h"
 
 #include <vector>
 #include <iomanip>
 #include <iostream>
+#include <cmath>
 
 using std::vector;
 
@@ -14,6 +15,9 @@ extern void normalise( CvSeq* keyPoints, unsigned int imgWidth, unsigned int img
 extern void
 findPairs(const CvSeq* rightKeypoints, const CvSeq* rightDescriptors,
           const CvSeq* leftKeypoints, const CvSeq* leftDescriptors, std::vector<int>& ptpairs );
+
+extern void printMat( std::string T, CvMat *H, int r, int c );
+
 // Constructor
 FMatrixAnalyzerCPU::FMatrixAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
 : HomographyAnalyzerCPU( nbChannelsInSDIVideo )
@@ -22,8 +26,8 @@ FMatrixAnalyzerCPU::FMatrixAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
 FMatrixAnalyzerCPU::~FMatrixAnalyzerCPU()
 {}
 
-int
-findFMatrix( const CvSeq* rightKeypoints, const CvSeq* rightDescriptors,
+
+int findFMatrix( const CvSeq* rightKeypoints, const CvSeq* rightDescriptors,
                 const CvSeq* leftKeypoints, const CvSeq* leftDescriptors, 
                 double *f, double *h1, double *h2, vector<int> &ptpairs,
                 CvSize &imgSize)
@@ -54,9 +58,21 @@ findFMatrix( const CvSeq* rightKeypoints, const CvSeq* rightDescriptors,
     _pt2 = cvMat(1, n, CV_32FC2, &pt2[0] );
 
     // TODO : recuperer les points matches et faire la rectification avec 
-    if( cvFindFundamentalMat( &_pt1, &_pt2, &_f, CV_LMEDS, 1.0, 0.99 /*, points matches*/ ))
+    if( cvFindFundamentalMat( &_pt1, &_pt2, &_f, CV_LMEDS, 3, 0.99 /*, points matches*/ ))
     {
-        cvStereoRectifyUncalibrated( &_pt1, &_pt2, &_f, imgSize, &_h1, &_h2);
+        // Original method, doesn't seem to work
+        //cvStereoRectifyUncalibrated( &_pt1, &_pt2, &_f, imgSize, &_h1, &_h2, 5);
+
+        // MVIR method
+        // TODO : use only matched points from Fundamental mat computation
+        v120Rectify(&_pt1, &_pt2, imgSize, &_h1, &_h2);
+        printMat( "mat f", &_f, 3, 3 );
+        printMat( "mat h1", &_h1, 3, 3 );
+        printMat( "mat h2", &_h2, 3, 3 );
+
+        // TESTS, TODO remove
+        cvmSet(&_h2, 0, 2, cvmGet(&_h2,0,2)-70.0/1980.0);
+
         return 1;
     }
 
@@ -135,6 +151,14 @@ void FMatrixAnalyzerCPU::analyse()
                         resultTmp->m_rightKeypoints, resultTmp->m_rightDescriptors,
                         d.m_f, d.m_h1, d.m_h2, resultTmp->m_ptpairs, imgSize ) )
     {
+        // Change matrices to image space coordinate
+        std::cout << m_imgWidth << std::endl;
+
+        d.m_h1[2] = d.m_h1[2]*static_cast<float>(m_imgWidth); 
+        d.m_h1[5] = d.m_h1[5]*static_cast<float>(m_imgWidth); 
+        d.m_h2[2] = d.m_h2[2]*static_cast<float>(m_imgWidth); 
+        d.m_h2[5] = d.m_h2[5]*static_cast<float>(m_imgWidth); 
+
         // Copy result
         d.m_succeed = true;
         d.m_nbPtsRight = resultTmp->m_rightKeypoints->total;

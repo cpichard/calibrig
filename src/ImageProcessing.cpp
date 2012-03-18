@@ -173,7 +173,7 @@ bool convertToIntegral( CudaImageBuffer<float> &img )
 }
 
 // TODO in image processing ?
-bool warpImage( ImageGL &src, ImageGL &dst, float matrix[9] )
+bool warpImage( ImageGL &src, ImageGL &dst, double matrix[9] )
 {
     CudaDevicePtrWrapper<ImageGL,uchar4*> srcDevicePtr(src);
     CudaDevicePtrWrapper<ImageGL,uchar4*> dstDevicePtr(dst);

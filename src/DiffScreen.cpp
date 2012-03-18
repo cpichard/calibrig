@@ -1,8 +1,6 @@
 
 #include "DiffScreen.h"
 
-#include "Monitor.h"
-
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
@@ -17,8 +15,8 @@
 
 
 DiffScreen::DiffScreen( Display *dpy,  UInt2 winSize  )
-:ScreenLayout( dpy, winSize ),
-    m_mon()
+: ScreenLayout( dpy, winSize )
+, m_mon()
 {}
 
 DiffScreen::~DiffScreen()
@@ -154,7 +152,6 @@ void DiffScreen::nextFrame()
         m_mon.updateWithImageBuffer(m_leftImg,4 );
         return;
     }
-
 
     // Convert to RGB
     streamsToRGB( m_stream1, m_leftImg  );

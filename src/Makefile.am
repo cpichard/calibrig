@@ -20,6 +20,7 @@ FMatrixAnalyzerCPU.h FMatrixAnalyzerCPU.cpp\
 ScreenLayout.h ScreenLayout.cpp\
 QuadViewScreen.h QuadViewScreen.cpp\
 DiffScreen.h DiffScreen.cpp\
+VisualComfortScreen.h VisualComfortScreen.cpp\
 CudaUtils.h CudaUtils.cpp\
 Utils.h Utils.cpp\
 ImageGL.h ImageGL.cpp\
@@ -65,5 +66,9 @@ HistogramScreen.cpp\
 ProgramOptions.h\
 ProgramOptions.cpp\
 GraphicSystemX11.h\
-GraphicSystemX11.cpp
+GraphicSystemX11.cpp\
+LMOptimize.h\
+RectificationV120.cpp\
+RectificationV120.h\
+OCVUtils.h
 

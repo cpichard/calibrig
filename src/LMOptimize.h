@@ -1,8 +1,14 @@
 #ifndef __LMOPTIMIZE_H__
 #define __LMOPTIMIZE_H__
 
+//
+// Simple implemention of the Levenberg Marquardt optimisation method 
+//
+
 #include "OCVUtils.h"
 
+
+// Compute the jacobian as describe in multiple view geometry
 template<typename CalcFunctor>
 void computeJacobian( CalcFunctor &function, CvVector *parameters, CvMat *J )
 {
@@ -21,21 +27,15 @@ void computeJacobian( CalcFunctor &function, CvVector *parameters, CvMat *J )
         delta = std::max(delta,1.0e-13);
        
         // Reset the tmp param values
-        //aTmp = a;   
         cvCopy(parameters, paramsTmp); 
         
         // Augment only param j
-        //aTmp[j] += delta;                     // P'[j] = P[j] + delta
         cvSet(paramsTmp, j, cvGet(paramsTmp, j)+delta);
         
         // Compute augmented result
-        //kn::Vector<double> Xtmp = f(aTmp,b);  // f(P')
         function(paramsTmp, resultTmp); 
        
         // Compute gradient 
-        //Xtmp = (resultTmp - resultCurrent) / delta;     // for every line i : dX_i/da_j
-        // Set values 
-        //J.setColumn(j,Xtmp);
         for(int i=0; i<cvSize(resultTmp);i++)
         {
             const double val = (cvGet(resultTmp, i)-cvGet(resultCurrent, i)) / delta; 
@@ -48,6 +48,7 @@ void computeJacobian( CalcFunctor &function, CvVector *parameters, CvMat *J )
     cvReleaseVector(&paramsTmp);
 }
 
+// Return true is there is an improvement with newEps
 bool improvement(CvVector *eps, CvVector *newEps)
 {
     double sumBefore = 0.0;
@@ -62,6 +63,7 @@ bool improvement(CvVector *eps, CvVector *newEps)
     return sumBefore > sumAfter;
 }
 
+// Optimize the function in calcFunctor, ie find the bests parameters for the target results.
 template<typename CalcFunctor>
 int levenbergMarquardt( CalcFunctor &calcFunctor, CvVector *parameters, CvVector *targetResult, unsigned int maxIter)
 {
@@ -104,7 +106,6 @@ int levenbergMarquardt( CalcFunctor &calcFunctor, CvVector *parameters, CvVector
         calcFunctor(parameters, tmpResult);
         cvSub(targetResult, tmpResult, epsilon); 
         
-        // 
         int counter = 0;
         bool accepted = false;
         do
@@ -137,7 +138,7 @@ int levenbergMarquardt( CalcFunctor &calcFunctor, CvVector *parameters, CvVector
                 accepted=false;
             }
 
-            // TODO 
+            // TODO better 
             counter++;
             if(counter > 100) return 0;
 

@@ -12,7 +12,7 @@ bool convertPBOYToRGBA( const PixelBufferObject &in, ImageGL &out );
 bool convertToIntegral( CudaImageBuffer<float> &img );
 bool convertRGBAToCudaBufferY( const ImageGL &in, CudaImageBuffer<float> &out );
 bool convertCudaBufferYToRGBA( const  CudaImageBuffer<float> &in, ImageGL &out );
-bool warpImage( ImageGL &src, ImageGL &dst, float matrix[9] );
+bool warpImage( ImageGL &src, ImageGL &dst, double matrix[9] );
 bool diffImage( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg );
 bool diffImageBuffer( ImageGL &imgA, ImageGL &imgB, ImageGL &result );
 bool diffImageBufferYCbYCr( ImageGL &imgA, ImageGL &imgB, ImageGL &result );

@@ -37,6 +37,7 @@ void VisualComfortScreen::allocImage( UInt2 &imgSize )
     allocBufferAndTexture( m_rightImg, imgSize );
     allocBufferAndTexture( m_warpedRightImg, imgSize );
     allocBufferAndTexture( m_warpedLeftImg, imgSize );
+    allocBufferAndTexture( m_warpedImg, imgSize );
 }
 
 void VisualComfortScreen::freeImage()
@@ -45,6 +46,7 @@ void VisualComfortScreen::freeImage()
     releaseBufferAndTexture( m_leftImg );
     releaseBufferAndTexture( m_warpedRightImg );
     releaseBufferAndTexture( m_warpedLeftImg );
+    releaseBufferAndTexture( m_warpedImg );
 }
 
 void VisualComfortScreen::resizeImage( UInt2 &imgSize )
@@ -65,9 +67,11 @@ void VisualComfortScreen::nextFrame()
     
     Deformation &d = m_analysisResult->m_d;
     warpImage(m_leftImg, m_warpedLeftImg, d.m_h2); 
-    //warpImage(m_rightImg, m_warpedRightImg, d.m_h2); 
+    warpImage(m_rightImg, m_warpedRightImg, d.m_h1); 
     
-    m_mon.updateWithImageBuffer( m_warpedLeftImg, 4 );
+    diffImage( m_warpedLeftImg, m_warpedRightImg, m_warpedImg );
+    
+    m_mon.updateWithImageBuffer( m_warpedImg, 4 );
 
 }
 

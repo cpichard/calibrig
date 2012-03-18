@@ -27,6 +27,7 @@ private:
     ImageGL m_rightImg;
     ImageGL m_warpedRightImg;
     ImageGL m_warpedLeftImg;
+    ImageGL m_warpedImg;
 };
 
 
