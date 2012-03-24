@@ -70,11 +70,11 @@ void diffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int ima
         const float3 src1 =  make_float3( d_src1[posPix1].x, d_src1[posPix1].y, d_src1[posPix1].z );
         const float3 src2 =  make_float3( d_src2[posPix1].x, d_src2[posPix1].y, d_src2[posPix1].z );
 
-        const float3 result = src1-src2;
+        const float3 result = fabs(src1-src2);
 
-        const float R = (result.x+128.f);
-        const float G = (result.y+128.f);
-        const float B = (result.z+128.f);
+        const float R = (result.x+0.f);
+        const float G = (result.y+0.f);
+        const float B = (result.z+0.f);
 
         d_dst[ posPix1 ].x = (unsigned char)( R > 0 ) ? ( ( R <=255 ) ? R : 255 ): 0 ;
         d_dst[ posPix1 ].y = (unsigned char)( G > 0 ) ? ( ( G <=255 ) ? G : 255 ): 0 ;

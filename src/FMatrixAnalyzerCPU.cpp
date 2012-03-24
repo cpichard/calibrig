@@ -23,6 +23,8 @@ FMatrixAnalyzerCPU::FMatrixAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
 : HomographyAnalyzerCPU( nbChannelsInSDIVideo )
 {}
 
+
+
 FMatrixAnalyzerCPU::~FMatrixAnalyzerCPU()
 {}
 
@@ -71,7 +73,7 @@ int findFMatrix( const CvSeq* rightKeypoints, const CvSeq* rightDescriptors,
         printMat( "mat h2", &_h2, 3, 3 );
 
         // TESTS, TODO remove
-        cvmSet(&_h2, 0, 2, cvmGet(&_h2,0,2)-70.0/1980.0);
+        //cvmSet(&_h2, 0, 2, cvmGet(&_h2,0,2)-70.0/1980.0);
 
         return 1;
     }
