@@ -19,6 +19,7 @@ StereoAnalyzerGPU::StereoAnalyzerGPU()
 , m_result(NULL)
 , m_histoRange(20)
 , m_sentThreshold(500)
+, m_maxNumberOfPoints(8000)
 {}
 
 StereoAnalyzerGPU::~StereoAnalyzerGPU()
@@ -69,6 +70,10 @@ void StereoAnalyzerGPU::acceptCommand( const Command &command )
     {
         m_histoRange = command.m_value;
     }
+    if( command.m_action == "MAXPOINTS")
+    {
+        m_maxNumberOfPoints = command.m_value;
+    }
 }
 
 void StereoAnalyzerGPU::processImages()
@@ -82,6 +87,14 @@ void StereoAnalyzerGPU::processImages()
         // Compute matching
         if( m_matchMutex.try_lock() && m_result == NULL )
         {
+            std::cout << NbElements(m_leftDescriptors) << std::endl;
+            if( NbElements(m_leftDescriptors) > m_maxNumberOfPoints
+            ||  NbElements(m_rightDescriptors) > m_maxNumberOfPoints )
+            {
+                m_matchMutex.unlock();
+                return;    
+            }
+
             checkLastError();
             computeMatching( m_leftDescriptors, m_rightDescriptors,
                 m_leftMatchedPts, m_rightMatchedPts,

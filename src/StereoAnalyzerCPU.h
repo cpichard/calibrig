@@ -52,6 +52,9 @@ private:
     // Threshold for surf extraction
     unsigned int m_surfThreshold;
     
+    // Maximum number of points
+    unsigned int m_maxNumberOfPoints;
+    
     // below variables In computation data instead ???
     //
     // Right image

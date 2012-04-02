@@ -55,6 +55,7 @@ private:
     ComputationDataGPU *        m_result;
     int                         m_histoRange;
     float                       m_sentThreshold;
+    unsigned int                m_maxNumberOfPoints;
 };
 
 #endif // __STEREOANALYSERGPU_H__

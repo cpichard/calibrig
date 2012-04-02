@@ -91,7 +91,7 @@ Window createMainWindow( Display *dpy, GLXContext &ctx, int xscreen, unsigned in
     // Get visual from FB config.
     vi = &VI;
     if(vi = glXGetVisualFromFBConfig(dpy, config)) {
-        printf("Using visual %0x\n", vi->visualid);
+        printf("Using visual %0x\n", (unsigned int)vi->visualid);
         printf("Depth = %d\n", vi->depth);
     } else {
         printf("Couldn't find visual for onscreen window.\n");

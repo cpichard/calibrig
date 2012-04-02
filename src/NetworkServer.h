@@ -103,7 +103,20 @@ public:
                     m_commandStack.pushCommand("ANALYSER","OCVTHRESHOLD", value );
                 }
             }
-            // Histogram range - TODO 
+            else if( msgReceived.find("MAXPOINTS")!= string::npos )
+            {
+                std::string com;
+                int value = 0;
+                std::stringstream ss(msgReceived);
+                ss >> com; // MAXNBPOINTS
+                ss >> value;
+
+                if(!ss.fail())
+                {
+                    m_commandStack.pushCommand("ANALYSER","MAXPOINTS", value );
+                }
+            }
+            // Histogram range  
             else if( msgReceived.find("HRANGE")!= string::npos )
             {
                 std::string com;
