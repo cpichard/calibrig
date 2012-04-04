@@ -23,7 +23,7 @@ struct Deformation
         }
     }
     
-    static const unsigned int s_histogramBinSize = 64;
+    static const unsigned int s_histogramBinSize = 128;
 
     double m_h[9];
     bool m_succeed;

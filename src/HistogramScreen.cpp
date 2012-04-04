@@ -43,16 +43,17 @@ void HistogramScreen::draw()
 
     if(m_analysisResult)
     {
+        Deformation &d = m_analysisResult->m_d;
+        const float mid = ((float)d.s_histogramBinSize+1.0)*m_analysisResult->m_binWidth/2.f;
+
         // Vertical disparity
         glLoadIdentity();
-        glScalef( 0.5, 0.5, 0);
-        glTranslatef( -1.8, 0.4, 0 );
+        glScalef( 0.25, 0.5, 0);
+        glTranslatef( -3.6, 0.4, 0 );
         glColor4f(1.0f, 1.0, 0.5f, 0.2f);
         m_analysisResult->drawVerticalDisparity();
         drawText(0.0,1.0,"Vertical disparity" );
 
-        Deformation &d = m_analysisResult->m_d;
-        const float mid = ((float)d.s_histogramBinSize+1.0)*m_analysisResult->m_binWidth/2.f;
         // Draw horizontal ligne
         glColor4f(1.0f, 0.0, 0.f, 0.0f);
         glBegin(GL_LINES);
@@ -62,8 +63,8 @@ void HistogramScreen::draw()
 
         // Horizontal disparity
         glLoadIdentity();
-        glScalef( 0.5, 0.5, 0);
-        glTranslatef( -1.8, -1.6, 0 );
+        glScalef( 0.25, 0.5, 0);
+        glTranslatef( -3.6, -1.6, 0 );
         glColor4f(1.0f, 1.0, 0.5f, 0.2f);
         m_analysisResult->drawHorizontalDisparity();
         drawText(0.0,1.0,"Horizontal disparity");

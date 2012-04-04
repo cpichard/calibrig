@@ -139,6 +139,16 @@ public:
                 // Close connection
                 return;
             }
+            else if( msgReceived.find("GETHH") != string::npos)
+            {
+                makeHistogramHorizontalReply();
+                sendMessage();
+            }
+            else if( msgReceived.find("GETHV") != string::npos)
+            {
+                makeHistogramVerticalReply();
+                sendMessage();
+            }
             else if( msgReceived.find("GETH") != string::npos)
             {
                 makeHistogramReply();
@@ -155,7 +165,7 @@ public:
             }
             else
             {
-                m_msgToSend = "{\"help\" : \"unknown command, use GETR, GETH, THRES <value>, HRANGE <value>, SNAPSHOT, VERSION, CLOSE or EXIT\"}";
+                m_msgToSend = "{\"help\" : \"unknown command, use GETR, GETH, GETHV, GETHH, MAXPOINTS <value>,THRES <value>, HRANGE <value>, SNAPSHOT, VERSION, CLOSE or EXIT\"}\n";
                 sendMessage();
             }
 
@@ -188,7 +198,39 @@ public:
         str << ", \"pts_l\":" << d.m_nbPtsLeft;
         str << ", \"matches\":" << d.m_nbMatches;
         str << ", \"success\":" << ( d.m_succeed ? "true" : "false") ;
-        str << " }";
+        str << " }\n";
+        m_msgToSend = str.str();
+    }
+
+    // Histogram horizontal 
+    void makeHistogramHorizontalReply( )
+    {
+        Deformation d;
+        m_result.getResult( d );
+        std::stringstream str;
+        str << "{ \"hdisp\":[" << d.m_hdisp[0];
+        for( unsigned int i=1; i< d.s_histogramBinSize; i++)
+        {
+            str << ", " << d.m_hdisp[i];
+        }
+        str << "] }\n";
+
+        m_msgToSend = str.str();
+    }
+
+    // Histogram vertical
+    void makeHistogramVerticalReply( )
+    {
+        Deformation d;
+        m_result.getResult( d );
+        std::stringstream str;
+        str << "{ \"vdisp\":[" << d.m_vdisp[0];
+        for( unsigned int i=1; i< d.s_histogramBinSize; i++)
+        {
+            str << ", " << d.m_vdisp[i];
+        }
+        str << "] }\n";
+
         m_msgToSend = str.str();
     }
 
@@ -209,7 +251,7 @@ public:
             str << ", " << d.m_vdisp[i];
         }
 
-        str << "] }";
+        str << "] }\n";
 
         m_msgToSend = str.str();
     }
@@ -219,7 +261,7 @@ public:
         Deformation d;
         m_result.getResult( d );
         std::stringstream str;
-        str << "{ \"version\":\"" << std::string(version) << "\", \"mode\":\"" << d.m_mode << "\" }";
+        str << "{ \"version\":\"" << std::string(version) << "\", \"mode\":\"" << d.m_mode << "\" }\n";
         m_msgToSend = str.str();
     }
 

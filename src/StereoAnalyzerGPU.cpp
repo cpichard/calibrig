@@ -87,18 +87,16 @@ void StereoAnalyzerGPU::processImages()
         // Compute matching
         if( m_matchMutex.try_lock() && m_result == NULL )
         {
-            std::cout << NbElements(m_leftDescriptors) << std::endl;
-            if( NbElements(m_leftDescriptors) > m_maxNumberOfPoints
-            ||  NbElements(m_rightDescriptors) > m_maxNumberOfPoints )
+            // Compute matching only if the number of points is under a threshold
+            if( NbElements(m_leftDescriptors) < m_maxNumberOfPoints
+            &&  NbElements(m_rightDescriptors) < m_maxNumberOfPoints )
             {
-                m_matchMutex.unlock();
-                return;    
+                checkLastError();
+                computeMatching( m_leftDescriptors, m_rightDescriptors,
+                    m_leftMatchedPts, m_rightMatchedPts,
+                    Size(m_imgRight));
             }
 
-            checkLastError();
-            computeMatching( m_leftDescriptors, m_rightDescriptors,
-                m_leftMatchedPts, m_rightMatchedPts,
-                Size(m_imgRight));
             checkLastError();
             // Prepare data to be computed
             m_result = new ComputationDataGPU( m_imgLeft, m_imgRight, m_rightPoints, m_leftPoints );
@@ -136,6 +134,11 @@ void StereoAnalyzerGPU::analyse()
     d.m_nbPtsLeft = NbElements(m_leftPoints);
     d.m_mode = "GPU";
 
+    if( NbElements(m_leftDescriptors) >= m_maxNumberOfPoints
+    ||  NbElements(m_rightDescriptors) >= m_maxNumberOfPoints )
+    {
+        d.m_nbMatches = 0;
+    }
     // Compute homography descriptors for left and right images
     if( d.m_nbMatches > 8 )
     {
@@ -168,6 +171,7 @@ void StereoAnalyzerGPU::analyse()
             m_result->m_thresholdUsed = m_sentThreshold; 
         }
     }
+    
     m_matchMutex.unlock();
 }
 

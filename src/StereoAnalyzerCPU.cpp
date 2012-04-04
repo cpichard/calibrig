@@ -51,7 +51,15 @@ StereoAnalyzerCPU::~StereoAnalyzerCPU()
     // Release OpenCV images
     freeImages( );
 
-    // TODO : free matrices
+    cvFree(&m_warpMatrix);
+    m_warpMatrix = NULL;
+    
+    cvFree(&m_toNormMatrix);
+    m_toNormMatrix = NULL;
+
+    cvFree(&m_fromNormMatrix);
+    m_fromNormMatrix = NULL;
+
     if(m_result)
     {
         delete m_result;
@@ -414,9 +422,7 @@ void StereoAnalyzerCPU::analyse()
     //printf( "Extraction time = %gms\n", tt/(cvGetTickFrequency()*1000.));
 
     // No or too many points found
-    if(  ! resultTmp->m_rightKeypoints || ! resultTmp->m_leftKeypoints
-    ||   resultTmp->m_rightKeypoints->total > m_maxNumberOfPoints
-    ||  resultTmp->m_leftKeypoints->total > m_maxNumberOfPoints )
+    if(  ! resultTmp->m_rightKeypoints || ! resultTmp->m_leftKeypoints)
     {
         delete resultTmp;
         resultTmp = NULL;
@@ -434,8 +440,10 @@ void StereoAnalyzerCPU::analyse()
     d.m_nbMatches = 0;
     d.m_mode = "CPU";
 
-    // Compute homography
-    if( findHomography( resultTmp->m_leftKeypoints, resultTmp->m_leftDescriptors,
+    // Compute homography only if number of points is under a certain level
+    if( resultTmp->m_rightKeypoints->total < m_maxNumberOfPoints
+    &&  resultTmp->m_leftKeypoints->total < m_maxNumberOfPoints
+    &&  findHomography( resultTmp->m_leftKeypoints, resultTmp->m_leftDescriptors,
                         resultTmp->m_rightKeypoints, resultTmp->m_rightDescriptors,
                         d.m_h, resultTmp->m_ptpairs ) )
     {

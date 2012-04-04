@@ -44,7 +44,7 @@
 
 #define TEST 0
 
-const char *version = "20022012";
+const char *version = "04042012";
 
 int main(int argc, char *argv[])
 {
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
         ("help", "produce help message")
         ("port", po::value<unsigned int>(), "server port")
         ("gpu", "enable gpu computing")
-        ("nothread", "remove gpu multi threading ")
+        ("nothread", "remove multi threading - for debugging purposes")
     ;
 
 	// Parse command line
@@ -414,6 +414,8 @@ int main(int argc, char *argv[])
         runAnalysis.stop();
         analyzer->unlock();
         analysisThread->join();
+        delete analysisThread;
+        analysisThread = NULL;
         std::cout << "Using threaded analyzer" << std::endl;
     }
 	delete analyzer;
