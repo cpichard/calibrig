@@ -44,7 +44,7 @@
 
 #define TEST 0
 
-const char *version = "04042012";
+const char *version = "05042012";
 
 int main(int argc, char *argv[])
 {
@@ -108,9 +108,9 @@ int main(int argc, char *argv[])
 #endif
 
     // Value for the server
-    SharedResult sharedResult;
     CommandStack commandStack;
     Command currentCommand;
+    LockDecorator<Deformation> sharedResult;
     NetworkServer server(sharedResult,commandStack,serverPort);
     boost::thread t(boost::ref(server));
     
@@ -345,9 +345,9 @@ int main(int argc, char *argv[])
                 ComputationData *newResult = analyzer->acquireLastResult();
                 if( newResult != NULL )
                 {
-                    activeScreen->setResult(NULL);
 
                     if(result != NULL)
+                        activeScreen->setResult(NULL);
                         delete result;
 
                     result = newResult;
@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
                     activeScreen->updateResult();
 
                     // Give new result to tcp server
-                    sharedResult.setResult( result->m_d );
+                    sharedResult.set( result->m_d );
                 }
 
                 if( analyzer->imagesAreNew() == false )
