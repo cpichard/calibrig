@@ -58,5 +58,9 @@ CudaImageProcessing.cu\
 SurfMatchingExperimental.h\
 SurfMatchingExperimental.cu\
 HistogramScreen.h\
-HistogramScreen.cpp
+HistogramScreen.cpp\
+AnaglyphScreen.h\
+AnaglyphScreen.cpp\
+MixScreen.h\
+MixScreen.cpp
 

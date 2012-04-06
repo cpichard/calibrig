@@ -50,6 +50,51 @@ void warpImage( uchar4 *d_dst, int imageW, int imageH, float matrix[9] )
 }
 
 __global__
+void anaglyphRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
+{
+    // Position in dest image
+    const int ix = blockDim.x * blockIdx.x + threadIdx.x;
+    const int iy = blockDim.y * blockIdx.y + threadIdx.y;
+
+    // Position in src image
+    if(ix < imageW && iy < imageH)
+    {
+        unsigned int pos = ix + iy*imageW;
+
+        d_dst[ pos ].x = d_src1[pos].x; 
+        d_dst[ pos ].y = d_src2[pos].y;
+        d_dst[ pos ].z = d_src2[pos].z;
+    }
+}
+
+__global__
+void mixRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
+{
+    // Position in dest image
+    const int ix = blockDim.x * blockIdx.x + threadIdx.x;
+    const int iy = blockDim.y * blockIdx.y + threadIdx.y;
+
+    // Position in src image
+    if(ix < imageW && iy < imageH)
+    {
+        unsigned int posPix1 = ix + iy*imageW;
+
+        const float3 src1 =  make_float3( d_src1[posPix1].x, d_src1[posPix1].y, d_src1[posPix1].z );
+        const float3 src2 =  make_float3( d_src2[posPix1].x, d_src2[posPix1].y, d_src2[posPix1].z );
+
+        const float3 result = src1+src2;
+
+        const float R = (result.x/2.f);
+        const float G = (result.y/2.f);
+        const float B = (result.z/2.f);
+
+        d_dst[ posPix1 ].x = (unsigned char)( R > 0 ) ? ( ( R <=255 ) ? R : 255 ): 0 ;
+        d_dst[ posPix1 ].y = (unsigned char)( G > 0 ) ? ( ( G <=255 ) ? G : 255 ): 0 ;
+        d_dst[ posPix1 ].z = (unsigned char)( B > 0 ) ? ( ( B <=255 ) ? B : 255 ): 0 ;
+    }
+}
+
+__global__
 void diffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
 {
     // Position in dest image
@@ -452,6 +497,26 @@ void cudaDiffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     diffRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imageW, imageH );
+    cudaThreadSynchronize();
+}
+
+extern "C"
+void cudaMix( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
+{
+    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+    dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
+
+    mixRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imageW, imageH );
+    cudaThreadSynchronize();
+}
+
+extern "C"
+void cudaAnaglyph( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
+{
+    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+    dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
+
+    anaglyphRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imageW, imageH );
     cudaThreadSynchronize();
 }
 

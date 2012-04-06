@@ -308,10 +308,31 @@ int main(int argc, char *argv[])
                 bNotDone = false;
             }
 
-            if( currentCommand.m_dest == "MAIN"
+            else if( currentCommand.m_dest == "MAIN"
             && currentCommand.m_action == "SNAPSHOT")
             {
                 saveImages = true;    
+            }
+
+            else if( currentCommand.m_dest == "MAIN"
+            && currentCommand.m_action == "SCREEN")
+            {
+                int screenNumber = currentCommand.m_value;
+                switch(screenNumber)
+                {
+                case 1:
+                    activeScreen = screen1;
+                    break;
+                case 2:
+                    activeScreen = screen2;
+                    break;
+                case 3:
+                    activeScreen = screen3;
+                    break;
+                default:
+                    // do nothing
+                    break;
+                } 
             }
 
             // Redirect command for analyser

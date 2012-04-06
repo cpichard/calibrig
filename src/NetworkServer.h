@@ -124,6 +124,19 @@ public:
                     m_commandStack.pushCommand("ANALYSER","MAXPOINTS", value );
                 }
             }
+            else if( msgReceived.find("SCREEN")!= string::npos )
+            {
+                std::string com;
+                int value = 0;
+                std::stringstream ss(msgReceived);
+                ss >> com; // SCREEN NUMBER
+                ss >> value;
+
+                if(!ss.fail())
+                {
+                    m_commandStack.pushCommand("MAIN","SCREEN", value );
+                }
+            }
             // Histogram range  
             else if( msgReceived.find("HRANGE")!= string::npos )
             {
