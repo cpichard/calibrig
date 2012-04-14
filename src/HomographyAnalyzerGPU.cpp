@@ -20,6 +20,7 @@ HomographyAnalyzerGPU::HomographyAnalyzerGPU()
 , m_histoRange(20)
 , m_sentThreshold(500)
 , m_toDispose(NULL)
+, m_maxNumberOfPoints(8000)
 {}
 
 HomographyAnalyzerGPU::~HomographyAnalyzerGPU()
@@ -67,6 +68,10 @@ void HomographyAnalyzerGPU::acceptCommand( const Command &command )
     {
         m_histoRange = command.m_value;
     }
+    if( command.m_action == "MAXPOINTS")
+    {
+        m_maxNumberOfPoints = command.m_value;
+    }
 }
 
 void HomographyAnalyzerGPU::analyse()
@@ -109,6 +114,11 @@ void HomographyAnalyzerGPU::analyse()
     d.m_nbPtsLeft = NbElements(m_leftPoints);
     d.m_mode = "GPU";
 
+    if( NbElements(m_leftDescriptors) >= m_maxNumberOfPoints
+    ||  NbElements(m_rightDescriptors) >= m_maxNumberOfPoints )
+    {
+        d.m_nbMatches = 0;
+    }
     // Compute homography descriptors for left and right images
     if( d.m_nbMatches > 8 )
     {

@@ -56,6 +56,7 @@ private:
     ComputationDataGPU *        m_toDispose;
     int                         m_histoRange;
     float                       m_sentThreshold;
+    unsigned int                m_maxNumberOfPoints;
 };
 
 #endif // __HOMOGRAPHYANALYZERGPU_H__ 

@@ -36,6 +36,9 @@
 #include "QuadViewScreen.h"
 #include "DiffScreen.h"
 #include "HistogramScreen.h"
+#include "HistogramScreen.h"
+#include "AnaglyphScreen.h"
+#include "MixScreen.h"
 #include "VisualComfortScreen.h"
 #include "GrabberSDI.h"
 #include "GrabberTest.h"
@@ -46,7 +49,7 @@
 
 #include "GraphicSystemX11.h"
 
-const char *version = "20022012";
+const char *version = "14042012";
 
 
 int main(int argc, char *argv[])
@@ -55,7 +58,7 @@ int main(int argc, char *argv[])
     ProgramOptions po(argc, argv, version);
 
     // Network server variables 
-    SharedResult sharedResult;
+    LockDecorator<Deformation> sharedResult;
     CommandStack commandStack;
     Command currentCommand;
     NetworkServer server(sharedResult, commandStack, po.m_serverPort);
@@ -81,8 +84,10 @@ int main(int argc, char *argv[])
     // Screens
     QuadViewScreen  *screen1 = new QuadViewScreen( gs.m_display, po.m_winSize );
     DiffScreen      *screen2 = new DiffScreen( gs.m_display, po.m_winSize );
-    HistogramScreen *screen3 = new HistogramScreen( gs.m_display, po.m_winSize );
-    VisualComfortScreen *screen4 = new VisualComfortScreen( gs.m_display, po.m_winSize );
+    AnaglyphScreen  *screen3 = new AnaglyphScreen( gs.m_display, po.m_winSize );
+    MixScreen       *screen4 = new MixScreen( gs.m_display, po.m_winSize ); 
+    HistogramScreen *screen5 = new HistogramScreen( gs.m_display, po.m_winSize );
+    VisualComfortScreen *screen6 = new VisualComfortScreen( gs.m_display, po.m_winSize );
 
     ScreenLayout    *activeScreen = NULL;
     activeScreen = screen1;
@@ -102,6 +107,8 @@ int main(int argc, char *argv[])
         screen2->resizeImage(grabber->videoSize());
         screen3->resizeImage(grabber->videoSize());
         screen4->resizeImage(grabber->videoSize());
+        screen5->resizeImage(grabber->videoSize());
+        screen6->resizeImage(grabber->videoSize());
 
         // Set capture handle to all screens
         activeScreen->setVideoStreams( grabber->stream1(), grabber->stream2() );
@@ -126,7 +133,7 @@ int main(int argc, char *argv[])
     //    analyzer = new HomographyAnalyzerGPU();
     //else
     //    analyzer = new HomographyAnalyzerCPU();
-
+    // Testing a new analyser
     analyzer = new FMatrixAnalyzerCPU();
 
     // Create a thread to run analysis on background
@@ -171,28 +178,38 @@ int main(int argc, char *argv[])
                     }
 
                     // SPACE
-                    if( kpe->keycode == 65 ) //SPACE
+                    else if( kpe->keycode == 65 ) //SPACE
                     {
                     }
                     // Key_1
-                    if( kpe->keycode == 10 ) 
+                    else if( kpe->keycode == 10 ) 
                     {
                         activeScreen = screen1;
                     }
                     // Key_2
-                    if( kpe->keycode == 11 ) 
+                    else if( kpe->keycode == 11 ) 
                     {
                         activeScreen = screen2;
                     }
                     // Key_3
-                    if( kpe->keycode == 12 ) 
+                    else if( kpe->keycode == 12 ) 
                     {
                         activeScreen = screen3;
                     }
                     // Key_4
-                    if( kpe->keycode == 13 ) 
+                    else if( kpe->keycode == 13 ) 
                     {
                         activeScreen = screen4;
+                    }
+                    // Key_5
+                    else if( kpe->keycode == 14 ) 
+                    {
+                        activeScreen = screen5;
+                    }
+                    // Key_6
+                    else if( kpe->keycode == 15 ) 
+                    {
+                        activeScreen = screen6;
                     }
                     //std::cout << "KeyPress = " << kpe->keycode << std::endl;
 
@@ -233,10 +250,40 @@ int main(int argc, char *argv[])
                 bNotDone = false;
             }
 
-            if( currentCommand.m_dest == "MAIN"
+            else if( currentCommand.m_dest == "MAIN"
             && currentCommand.m_action == "SNAPSHOT")
             {
                 saveImages = true;    
+            }
+
+            else if( currentCommand.m_dest == "MAIN"
+            && currentCommand.m_action == "SCREEN")
+            {
+                int screenNumber = currentCommand.m_value;
+                switch(screenNumber)
+                {
+                case 1:
+                    activeScreen = screen1;
+                    break;
+                case 2:
+                    activeScreen = screen2;
+                    break;
+                case 3:
+                    activeScreen = screen3;
+                    break;
+                case 4:
+                    activeScreen = screen4;
+                    break;
+                case 5:
+                    activeScreen = screen5;
+                    break;
+                case 6:
+                    activeScreen = screen6;
+                    break;
+                default:
+                    // do nothing
+                    break;
+                } 
             }
 
             // Redirect command for analyser
@@ -270,11 +317,9 @@ int main(int argc, char *argv[])
                 ComputationData *newResult = analyzer->acquireLastResult();
                 if( newResult != NULL )
                 {
-                    activeScreen->setResult(NULL);
 
                     if(result != NULL)
                         analyzer->disposeResult(result);
-
                     result = newResult;
                     newResult = NULL;
 
@@ -283,7 +328,7 @@ int main(int argc, char *argv[])
                     activeScreen->updateResult();
 
                     // Give new result to tcp server
-                    sharedResult.setResult( result->m_d );
+                    sharedResult.set( result->m_d );
                 }
 
                 if( analyzer->imagesAreNew() == false )
@@ -307,7 +352,6 @@ int main(int argc, char *argv[])
 
                 analyzer->unlock();
                 if(po.m_noThread==true)
-
                 {
                     analyzer->analyse();
                 }
@@ -337,6 +381,8 @@ int main(int argc, char *argv[])
         runAnalysis.stop();
         analyzer->unlock();
         analysisThread->join();
+        delete analysisThread;
+        analysisThread = NULL;
         std::cout << "Using threaded analyzer" << std::endl;
         delete analysisThread;
         analysisThread = NULL;
@@ -347,6 +393,9 @@ int main(int argc, char *argv[])
     delete screen1;
     delete screen2;
     delete screen3;
+    delete screen4;
+    delete screen5;
+    delete screen6;
 
     // TODO : free OpenGL memory
     // Test in CPU

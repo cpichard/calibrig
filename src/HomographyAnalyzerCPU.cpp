@@ -41,6 +41,7 @@ HomographyAnalyzerCPU::HomographyAnalyzerCPU( unsigned int nbChannelsInSDIVideo 
 , m_tmpBuf(0)
 , m_warpMatrix(NULL)
 , m_result(NULL)
+, m_maxNumberOfPoints(8000)
 {
     m_warpMatrix = cvCreateMat(2,3,CV_64FC1);
     m_toNormMatrix = cvCreateMat(3,3,CV_64FC1);
@@ -54,7 +55,15 @@ HomographyAnalyzerCPU::~HomographyAnalyzerCPU()
     // Release OpenCV images
     freeImages( );
 
-    // TODO : free matrices
+    cvFree(&m_warpMatrix);
+    m_warpMatrix = NULL;
+    
+    cvFree(&m_toNormMatrix);
+    m_toNormMatrix = NULL;
+
+    cvFree(&m_fromNormMatrix);
+    m_fromNormMatrix = NULL;
+
     if(m_result)
     {
         delete m_result;
@@ -153,6 +162,10 @@ void HomographyAnalyzerCPU::acceptCommand( const Command &command )
     {
         // value 0 to 100
         m_surfThreshold = command.m_value;// < 0 ? 10 : ( (command.m_value > 100 ) ? 10000 : command.m_value * 100);
+    }
+    if( command.m_action == "MAXPOINTS" )
+    {
+        m_maxNumberOfPoints = command.m_value;    
     }
 }
 
@@ -416,8 +429,8 @@ void HomographyAnalyzerCPU::analyse()
     // TODO : is it needed in result ?
     //printf( "Extraction time = %gms\n", tt/(cvGetTickFrequency()*1000.));
 
-    // No points found
-    if( ! resultTmp->m_rightKeypoints || ! resultTmp->m_leftKeypoints )
+    // No or too many points found
+    if(  ! resultTmp->m_rightKeypoints || ! resultTmp->m_leftKeypoints)
     {
         delete resultTmp;
         resultTmp = NULL;
@@ -434,8 +447,11 @@ void HomographyAnalyzerCPU::analyse()
     d.m_nbPtsLeft = resultTmp->m_leftKeypoints->total;
     d.m_nbMatches = 0;
     d.m_mode = "CPU";
-    // Compute homography
-    if( findHomography( resultTmp->m_leftKeypoints, resultTmp->m_leftDescriptors,
+
+    // Compute homography only if number of points is under a certain level
+    if( resultTmp->m_rightKeypoints->total < m_maxNumberOfPoints
+    &&  resultTmp->m_leftKeypoints->total < m_maxNumberOfPoints
+    &&  findHomography( resultTmp->m_leftKeypoints, resultTmp->m_leftDescriptors,
                         resultTmp->m_rightKeypoints, resultTmp->m_rightDescriptors,
                         d.m_h1, resultTmp->m_ptpairs ) )
     {

@@ -70,5 +70,9 @@ GraphicSystemX11.cpp\
 LMOptimize.h\
 RectificationV120.cpp\
 RectificationV120.h\
-OCVUtils.h
+OCVUtils.h\
+AnaglyphScreen.h\
+AnaglyphScreen.cpp\
+MixScreen.h\
+MixScreen.cpp
 

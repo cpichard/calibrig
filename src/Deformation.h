@@ -23,7 +23,7 @@ struct Deformation
         }
     }
     
-    static const unsigned int s_histogramBinSize = 64;
+    static const unsigned int s_histogramBinSize = 128;
 
     double m_h1[9]; // Homography first image
     double m_h2[9]; // Homography second image

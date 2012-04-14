@@ -194,6 +194,30 @@ bool diffImage( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
     return true;
 }
 
+bool anaglyph( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
+{
+    // Map buffer
+    CudaDevicePtrWrapper<ImageGL,uchar4*> in1DevicePtr(src1Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> in2DevicePtr(src2Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> outDevicePtr(dstImg);
+
+    cudaAnaglyph( (uchar4*)outDevicePtr, (uchar4*)in1DevicePtr, (uchar4*)in2DevicePtr, Width(src1Img), Height(src1Img) );
+
+    return true;
+}
+
+bool mix( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
+{
+    // Map buffer
+    CudaDevicePtrWrapper<ImageGL,uchar4*> in1DevicePtr(src1Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> in2DevicePtr(src2Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> outDevicePtr(dstImg);
+
+    cudaMix( (uchar4*)outDevicePtr, (uchar4*)in1DevicePtr, (uchar4*)in2DevicePtr, Width(src1Img), Height(src1Img) );
+
+    return true;
+}
+
 bool copyImageBuffer( ImageGL &src, ImageGL &dst )
 {
     // Map buffer
