@@ -32,7 +32,11 @@ bool GrabberTest::init()
     //std::string testFile="snapshot_cbox2_021312153017";
     //std::string testFile="snapshot_kali_030612075916"; 
     //std::string testFile="snapshot_kali_031112173101"; 
-    std::string testFile="snapshot_cbox2_040612125803";
+    //std::string testFile="snapshot_cbox2_040612125803";
+    //std::string testFile="snapshot_cbox2_040412170250"; 
+    //std::string testFile="snapshot_cbox2_040612145404"; 
+    //std::string testFile="snapshot_cbox2_040412162013";
+    std::string testFile="snapshot_cbox2_040412184550";
     std::stringstream testImage1;
     testImage1 << "./" << testFile << "_1.dat";
     std::stringstream testImage2;

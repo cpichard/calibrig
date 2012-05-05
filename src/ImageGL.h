@@ -105,12 +105,50 @@ struct CudaImageBuffer
     const Type *bufId() const { return m_ptr; }
 };
 
+template<typename Type, unsigned int NbPlanes >
+struct LocalImagePlanes
+{
+    LocalImagePlanes( UInt2 &size )
+    : m_size(size)
+    {
+        for(int i=0; i<NbPlanes; i++)
+        {
+            m_plane[i] = new CudaImageBuffer<Type>();
+            m_allocated[i] = allocBuffer(*m_plane[i], size);
+        }
+    }
 
-template<typename Type >
+    ~LocalImagePlanes()
+    {
+        for(int i=0; i<NbPlanes; i++)
+        {
+            if(m_plane[i] != NULL)
+            {
+                if(m_allocated[i]==true)
+                {
+                    releaseBuffer( *m_plane[i] );
+                    m_allocated[i]=false;
+                }
+                delete m_plane[i];
+                m_plane[i] = NULL;
+            }
+        }
+    }
+    inline
+    CudaImageBuffer<Type> & operator [] (unsigned int i){return *m_plane[i];}
+
+    bool m_allocated[NbPlanes];
+    CudaImageBuffer<Type> *m_plane[NbPlanes];
+    UInt2    m_size;
+};
+
+
+template<typename Type>
 struct LocalCudaImageBuffer : public CudaImageBuffer<Type>
 {
     LocalCudaImageBuffer( UInt2 &size )
-    :CudaImageBuffer<Type>(),m_allocated(false)
+    : CudaImageBuffer<Type>()
+    , m_allocated(false)
     {
         m_allocated = allocBuffer( *this, size );
     }

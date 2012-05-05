@@ -181,6 +181,64 @@ bool warpImage( ImageGL &src, ImageGL &dst, double matrix[9] )
     return true;
 }
 
+// Resize an image with box filtering
+bool boxFilterResize(ImageGL &src, ImageGL &dst)
+{
+    UInt2 TSize = SwapXY( Size(src) );
+
+    // 
+    LocalImagePlanes<float, 3> img(Size(img));
+    LocalImagePlanes<float, 3> imgTmp(Size(img));
+    LocalImagePlanes<float, 3> imgTmpTr1(TSize);
+    LocalImagePlanes<float, 3> imgTmpTr2(TSize);
+    //LocalCudaImageBuffer<float4> integralImg;
+
+
+    // Channels in float
+    //convertTo3Plane((uchar4*)src, (float*)img[0], (float*)img[1], (float*)img[2]);
+    
+    // Use Cudpp to create an integral image
+    CUDPPHandle integrateX, integrateY;
+
+	CUDPPConfiguration conf;
+	conf.op = CUDPP_ADD;
+	conf.datatype = CUDPP_FLOAT;
+	conf.algorithm = CUDPP_SCAN;
+	conf.options = CUDPP_OPTION_FORWARD | CUDPP_OPTION_INCLUSIVE;
+
+    // Allocate plan for rows integration
+    if( cudppPlan( &integrateX, conf, Width(img), Height(img), img[0].m_pitchInElements ) != CUDPP_SUCCESS )
+    {
+        std::cout << "Failed to allocate cudpp plan" << std::endl;
+    }
+
+    // Allocate plan for cols integration
+    if( cudppPlan( &integrateY, conf, Width(imgTmpTr1), Height(imgTmpTr1), imgTmpTr1[0].m_pitchInElements ) != CUDPP_SUCCESS )
+    {
+        std::cout << "Failed to allocate cudpp plan" << std::endl;
+    }
+   
+    // 3 channels 
+    for(int i=0; i<3; i++)
+    {
+        cudppMultiScan( integrateX, (float*)imgTmp[i], (float*)img[i], Width(img), Height(img) );
+        cudaTranspose( (float*)imgTmpTr1[i], imgTmpTr1[i].m_pitch, (float*)imgTmp[i], img[i].m_pitch, Width(img), Height(img) );
+
+        // Integrate columns
+        cudppMultiScan( integrateY, (float*)imgTmpTr2[i], (float*)imgTmpTr1[i], Width(imgTmpTr1), Height(imgTmpTr1));
+        cudaTranspose( (float*)img[i], img[i].m_pitch, (float*)imgTmpTr2[i], imgTmpTr2[i].m_pitch, Width(imgTmpTr2), Height(imgTmpTr2) );
+    }
+
+    // Convert to float4
+
+    // Put in texture
+
+    // Launch interpolation kernel
+
+
+}
+
+
 bool diffImage( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
 {
     // Map buffer
@@ -206,6 +264,17 @@ bool anaglyph( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
     return true;
 }
 
+bool resizeImageGL( ImageGL &src, ImageGL &dst )
+{
+    // Map buffer
+    CudaDevicePtrWrapper<ImageGL,uchar4*> inDevicePtr(src);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> outDevicePtr(dst);
+
+    cudaResize( (uchar4*)outDevicePtr, Width(dst), Height(dst), (uchar4*)inDevicePtr, Width(src), Height(src) );
+
+    return true;
+}
+
 bool mix( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
 {
     // Map buffer
@@ -215,6 +284,17 @@ bool mix( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dstImg )
 
     cudaMix( (uchar4*)outDevicePtr, (uchar4*)in1DevicePtr, (uchar4*)in2DevicePtr, Width(src1Img), Height(src1Img) );
 
+    return true;
+}
+
+bool visualComfort( ImageGL &src1Img, ImageGL &src2Img, ImageGL &dst1Img, ImageGL &dst2Img)
+{
+    CudaDevicePtrWrapper<ImageGL,uchar4*> in1DevicePtr(src1Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> in2DevicePtr(src2Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> out1DevicePtr(dst1Img);
+    CudaDevicePtrWrapper<ImageGL,uchar4*> out2DevicePtr(dst2Img);
+
+    cudaVisualComfort( (uchar4*)out1DevicePtr, (uchar4*)out2DevicePtr, (uchar4*)in1DevicePtr, (uchar4*)in2DevicePtr, Width(src1Img), Height(src1Img) );
     return true;
 }
 

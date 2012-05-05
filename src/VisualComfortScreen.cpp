@@ -33,11 +33,20 @@ void VisualComfortScreen::draw()
 
 void VisualComfortScreen::allocImage( UInt2 &imgSize )
 {
+
     allocBufferAndTexture( m_leftImg, imgSize );
     allocBufferAndTexture( m_rightImg, imgSize );
     allocBufferAndTexture( m_warpedRightImg, imgSize );
     allocBufferAndTexture( m_warpedLeftImg, imgSize );
     allocBufferAndTexture( m_warpedImg, imgSize );
+    
+    // Down rez size
+    UInt2 downRezSize(Width(imgSize)/5, Height(imgSize)/1);
+
+    allocBufferAndTexture(m_downRezImgRight, downRezSize);    
+    allocBufferAndTexture(m_downRezImgLeft, downRezSize);    
+    allocBufferAndTexture(m_resultImgRight, downRezSize);    
+    allocBufferAndTexture(m_resultImgLeft, downRezSize);    
 }
 
 void VisualComfortScreen::freeImage()
@@ -47,6 +56,10 @@ void VisualComfortScreen::freeImage()
     releaseBufferAndTexture( m_warpedRightImg );
     releaseBufferAndTexture( m_warpedLeftImg );
     releaseBufferAndTexture( m_warpedImg );
+    releaseBufferAndTexture( m_downRezImgLeft);
+    releaseBufferAndTexture( m_downRezImgLeft);
+    releaseBufferAndTexture( m_resultImgLeft);
+    releaseBufferAndTexture( m_resultImgRight);
 }
 
 void VisualComfortScreen::resizeImage( UInt2 &imgSize )
@@ -66,11 +79,15 @@ void VisualComfortScreen::nextFrame()
     streamsToRGB( m_stream2, m_rightImg );
     
     Deformation &d = m_analysisResult->m_d;
-    warpImage(m_leftImg, m_warpedLeftImg, d.m_h2); 
-    warpImage(m_rightImg, m_warpedRightImg, d.m_h1); 
-    
-    diffImage( m_warpedLeftImg, m_warpedRightImg, m_warpedImg );
-    
+    //warpImage(m_leftImg, m_warpedLeftImg, d.m_h2); 
+    //warpImage(m_rightImg, m_warpedRightImg, d.m_h1); 
+    //resizeImageGL(m_warpedLeftImg, m_downRezImgRight);
+    //resizeImageGL(m_warpedRightImg, m_downRezImgLeft);
+    resizeImageGL(m_leftImg, m_downRezImgRight);
+    resizeImageGL(m_rightImg, m_downRezImgLeft);
+    visualComfort( m_downRezImgLeft, m_downRezImgRight, m_resultImgLeft, m_resultImgRight );
+    resizeImageGL(m_resultImgLeft, m_warpedImg);
+    //resizeImageGL(m_downRezImgLeft, m_warpedImg);
     m_mon.updateWithImageBuffer( m_warpedImg, 4 );
 
 }

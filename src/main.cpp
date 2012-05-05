@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
     // Network server variables 
     LockDecorator<Deformation> sharedResult;
     CommandStack commandStack;
-    Command currentCommand;
     NetworkServer server(sharedResult, commandStack, po.m_serverPort);
     boost::thread t(boost::ref(server));
 
@@ -74,35 +73,31 @@ int main(int argc, char *argv[])
         std::cerr << "No CUDA device available - exiting" << std::endl;
         exit(EXIT_FAILURE);
     }
-    
-    cudaStream_t streams[2];
-    cudaStreamCreate(&streams[0]);
-    cudaStreamCreate(&streams[1]);
+   
+    // First tests with cuda stream, needs lot of refactoring before 
+    //cudaStream_t streams[2];
+    //cudaStreamCreate(&streams[0]);
+    //cudaStreamCreate(&streams[1]);
 
     // gs.m_display -> GraphicRenderContext ? gs.m_display + cuda + gl ?yy
 
-    // Screens
-    QuadViewScreen  *screen1 = new QuadViewScreen( gs.m_display, po.m_winSize );
-    DiffScreen      *screen2 = new DiffScreen( gs.m_display, po.m_winSize );
-    AnaglyphScreen  *screen3 = new AnaglyphScreen( gs.m_display, po.m_winSize );
-    MixScreen       *screen4 = new MixScreen( gs.m_display, po.m_winSize ); 
-    HistogramScreen *screen5 = new HistogramScreen( gs.m_display, po.m_winSize );
+    // Screens : TODO a vector of screen ?
+    // TODO : gs.addScreenLayout(screen1,screen2, screen3, ...)
+    QuadViewScreen      *screen1 = new QuadViewScreen( gs.m_display, po.m_winSize );
+    DiffScreen          *screen2 = new DiffScreen( gs.m_display, po.m_winSize );
+    AnaglyphScreen      *screen3 = new AnaglyphScreen( gs.m_display, po.m_winSize );
+    MixScreen           *screen4 = new MixScreen( gs.m_display, po.m_winSize ); 
+    HistogramScreen     *screen5 = new HistogramScreen( gs.m_display, po.m_winSize );
     VisualComfortScreen *screen6 = new VisualComfortScreen( gs.m_display, po.m_winSize );
-
-    ScreenLayout    *activeScreen = NULL;
-    activeScreen = screen1;
-
-    // TODO :
-    //gs.addScreenLayout(screen1, screen2, screen3)
+    ScreenLayout    *activeScreen = screen1;
 
     // Create an image grabber
-    
-    Grabber *grabber=NULL;
-    //grabber = new GrabberSDI(gs.m_display, gs.m_gpu, gs.m_glxContext);
-    grabber = new GrabberTest(gs.m_display, gs.m_gpu, gs.m_glxContext);
+    //Grabber *grabber = new GrabberSDI(gs.m_display, gs.m_gpu, gs.m_glxContext);
+    Grabber *grabber = new GrabberTest(gs.m_display, gs.m_gpu, gs.m_glxContext);
     
     if( grabber->init() )
     {
+        // Init all screens with the size of the grabbed image
         screen1->resizeImage(grabber->videoSize());
         screen2->resizeImage(grabber->videoSize());
         screen3->resizeImage(grabber->videoSize());
@@ -141,11 +136,15 @@ int main(int argc, char *argv[])
     analyzer->resizeImages( grabber->videoSize() );
     AnalyzerFunctor runAnalysis( *analyzer, cuContext, gs.m_display, gs.m_glxContext );
     boost::thread *analysisThread = NULL;
+    // If option is use thread (by default)
     if(po.m_noThread == false)
     {
         analysisThread = new boost::thread( boost::ref(runAnalysis) );
     }
+
+    // Variable needed in the loop
     ComputationData *result = NULL;
+    Command currentCommand;
     
     // Main XWindows event loop
     XEvent event;
@@ -336,7 +335,7 @@ int main(int argc, char *argv[])
 
                     analyzer->updateLeftImageWithSDIVideo (grabber->stream1());
 
-#if TEST            // Transform image for tests
+#if TEST            // Transform image for testing
                     convertYCbYCrToY( grabber->stream2(), m_YTmp );
                     matrix[0] = rand()%10*5;
                     matrix[1] = rand()%10*6;
@@ -383,9 +382,6 @@ int main(int argc, char *argv[])
         analysisThread->join();
         delete analysisThread;
         analysisThread = NULL;
-        std::cout << "Using threaded analyzer" << std::endl;
-        delete analysisThread;
-        analysisThread = NULL;
     }
 	delete analyzer;
 
@@ -408,8 +404,8 @@ int main(int argc, char *argv[])
 
     // ???
     //cudaReleaseDevice(cuContext);
-    cudaStreamDestroy(streams[0]);
-    cudaStreamDestroy(streams[1]);
+    //cudaStreamDestroy(streams[0]);
+    //cudaStreamDestroy(streams[1]);
 
     // Shutdown grabber
     grabber->shutdown();

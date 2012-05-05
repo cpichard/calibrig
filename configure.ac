@@ -45,7 +45,7 @@ AC_ARG_WITH([cuda-lib-path],
   [AS_HELP_STRING([--with-cuda-include-path],
     [location of the NVSDI libs, defaults to /usr/local/cuda/lib32])],
   [CUDA_LIBS="-L$withvali"],
-  [CUDA_LIBS='-L/usr/local/cuda/lib -lcuda -lcudart'])
+  [CUDA_LIBS='-L/usr/local/cuda/lib -lcuda -lcudart -lnpp'])
 AC_SUBST([CUDA_LIBS])
 
 AC_ARG_WITH([cuda-toolkit-include-path],

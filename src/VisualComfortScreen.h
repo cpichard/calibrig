@@ -28,6 +28,10 @@ private:
     ImageGL m_warpedRightImg;
     ImageGL m_warpedLeftImg;
     ImageGL m_warpedImg;
+    ImageGL m_downRezImgRight;    
+    ImageGL m_downRezImgLeft;    
+    ImageGL m_resultImgRight;    
+    ImageGL m_resultImgLeft;    
 };
 
 

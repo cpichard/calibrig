@@ -2,10 +2,12 @@
 #define BLOCKDIM_X 8
 #define BLOCKDIM_Y 8
 
-
+#include "CudaUtils.h"
 #include "cutil_math.h"
 
-texture<uchar4, 2, cudaReadModeElementType> tex;
+
+texture<uchar4, 2, cudaReadModeElementType> tex1;
+texture<uchar4, 2, cudaReadModeElementType> tex2;
 
 int iDivUp(int a, int b)
 {
@@ -24,7 +26,7 @@ int iDivUp(int a, int b)
 // TODO deformation
 // At the moment this function is only used for testing
 __global__
-void cuWarpImage( uchar4 *d_dst, int imageW, int imageH, double matrix[9] )
+void cuWarpImage( uchar4 *d_dst, int imageW, int imageH, double *matrix )
 {
     // Position in dest image
     const int ix = blockDim.x * blockIdx.x + threadIdx.x;
@@ -33,19 +35,18 @@ void cuWarpImage( uchar4 *d_dst, int imageW, int imageH, double matrix[9] )
     // Position in src image
     if( ix < imageW && iy < imageH )
     {
-        // Warp is only used for TESTING purposes
         unsigned int pos = ix + iy*imageW;
         const float fx = float(ix);
         const float fy = float(iy);
 
-        const float tu = fx*float(matrix[0]) +fy*float(matrix[1]) + float(matrix[2]);
-        const float tv = fx*float(matrix[3]) +fy*float(matrix[4]) + float(matrix[5]);
-        const float tw = fx*float(matrix[6]) +fy*float(matrix[7]) + float(matrix[8]); 
+        const float tu = fx*float(matrix[0]) + fy*float(matrix[1]) + float(matrix[2]);
+        const float tv = fx*float(matrix[3]) + fy*float(matrix[4]) + float(matrix[5]);
+        const float tw = fx*float(matrix[6]) + fy*float(matrix[7]) + float(matrix[8]); 
         
         const float u = tu/tw;
         const float v = tv/tw;
         
-        const uchar4 col = tex2D( tex, u, v ); 
+        const uchar4 col = tex2D( tex1, u, v ); 
         const float R = (float)col.x;
         const float G = (float)col.y;
         const float B = (float)col.z;
@@ -72,6 +73,187 @@ void anaglyphRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int
         d_dst[ pos ].z = d_src2[pos].z;
     }
 }
+
+__device__ float lerpf(float a, float b, float c){
+    return a + (b - a) * c;
+}
+
+__device__ float vecLen(uchar4 a, uchar4 b){
+    
+    const float bx = (1.f/255.f)*(float(b.x) - float(a.x));
+    const float by = (1.f/255.f)*(float(b.x) - float(a.x));
+    const float bz = (1.f/255.f)*(float(b.x) - float(a.x));
+    return (bx*bx + by*by + bz*bz);
+}
+
+#define NLM_WINDOW_RADIUS_W   11
+#define NLM_WINDOW_RADIUS_H   0
+#define NLM_BLOCK_RADIUS_W    3
+#define NLM_BLOCK_RADIUS_H    3
+#define NLM_WINDOW_AREA     ( (2 * NLM_WINDOW_RADIUS_H + 1) * (2 * NLM_WINDOW_RADIUS_W + 1) )
+#define INV_NLM_WINDOW_AREA ( 1.0f / (float)NLM_WINDOW_AREA )
+#define NLM_WEIGHT_THRESHOLD    0.10f
+#define NLM_LERP_THRESHOLD      0.10f
+
+__device__
+void toFloat4(const uchar4 &v, float4 *f)
+{  
+    f->x = float(v.x)/255.f;
+    f->y = float(v.y)/255.f;
+    f->z = float(v.z)/255.f;
+    f->w = float(v.z)/255.f;
+}
+
+
+__device__ void make_color(float r, float g, float b, float a, uchar4 *f)
+{
+    f->x = r < 0 ? 0 : (r > 255.f ? 255.f : r*255.f);
+    f->y = g < 0 ? 0 : (g > 255.f ? 255.f : g*255.f);
+    f->z = b < 0 ? 0 : (b > 255.f ? 255.f : b*255.f);
+    f->w = 0;
+}
+
+__global__
+void visualComfort( uchar4 *d_dst1, uchar4 *d_dst2, int imageW, int imageH)
+{
+    const float Noise = 3.f;
+    const float    lerpC = 0.2f;
+    const int ix = blockDim.x * blockIdx.x + threadIdx.x;
+    const int iy = blockDim.y * blockIdx.y + threadIdx.y;
+
+    //Add half of a texel to always address exact texel centers
+    const float x = (float)ix + 0.5f;
+    const float y = (float)iy + 0.5f;
+   
+    if(ix < imageW && iy < imageH)
+    {
+        float fCount = 0;
+        float sumWeights = 0;
+        float3 clr = {0, 0, 0};
+        float4 clr00;
+        toFloat4(tex2D(tex1, x, y), &clr00);
+        for(float i = -NLM_WINDOW_RADIUS_H; i <= NLM_WINDOW_RADIUS_H; i++) 
+        {
+            for(float j = -NLM_WINDOW_RADIUS_W; j <= NLM_WINDOW_RADIUS_W; j++)
+            {
+                float weightIJ = 0;
+                for(float n = -NLM_BLOCK_RADIUS_H; n <= NLM_BLOCK_RADIUS_H; n++)
+                {
+                    for(float m = -NLM_BLOCK_RADIUS_W; m <= NLM_BLOCK_RADIUS_W; m++)
+                    {
+                        weightIJ += vecLen(
+                            tex2D(tex2, x + j + m, y + i + n),
+                            tex2D(tex1,     x + m,     y + n)
+                        );
+                    }
+                }
+                float4 clrIJ;
+                toFloat4(tex2D(tex2, x + j, y + i), &clrIJ);
+                //Derive final weight from color and geometric distance
+                //weightIJ     = __expf( -(weightIJ * Noise + (i * i + j * j) * INV_NLM_WINDOW_AREA) );
+                weightIJ     = __expf( -( weightIJ*Noise+(clrIJ.y) ) );
+
+                //Accumulate (x + j, y + i) texel color with computed weight
+                clrIJ.x = fabs(clr00.x - clrIJ.x); 
+                clrIJ.y = fabs(clr00.y - clrIJ.y); 
+                clrIJ.z = fabs(clr00.z - clrIJ.z); 
+                clr.x       += clrIJ.x * weightIJ;
+                clr.y       += clrIJ.y * weightIJ;
+                clr.z       += clrIJ.z * weightIJ;
+
+                //Sum of weights for color normalization to [0..1] range
+                sumWeights  += weightIJ;
+
+                //Update weight counter, if NLM weight for current window texel
+                //exceeds the weight threshold
+                //fCount += (weightIJ > NLM_WEIGHT_THRESHOLD) ? INV_NLM_WINDOW_AREA : 0;
+            }
+        }
+
+        //Normalize result color by sum of weights
+        sumWeights = 1.0f / sumWeights;
+        clr.x *= sumWeights;
+        clr.y *= sumWeights;
+        clr.z *= sumWeights;
+
+        //Choose LERP quotent basing on how many texels
+        //within the NLM window exceeded the weight threshold
+        //float lerpQ = (fCount > NLM_LERP_THRESHOLD) ? lerpC : 1.0f - lerpC;
+
+        //Write final result to global memory
+        //clr.x = lerpf(clr.x, clr00.x, lerpQ);
+        //clr.y = lerpf(clr.y, clr00.y, lerpQ);
+        //clr.z = lerpf(clr.z, clr00.z, lerpQ);
+        
+        //clr.x = clr00.x-clr.x;
+        //clr.y = clr00.y-clr.y;
+        //clr.z = clr00.z-clr.z;
+        make_color(clr.x, clr.y, clr.z, 0, &(d_dst1[imageW * iy + ix]) );
+        //weightIJ /=float( (2*NLM_WINDOW_RADIUS_W+1)*(2*NLM_WINDOW_RADIUS_H+1)*(2*NLM_BLOCK_RADIUS_H+1)*(2*NLM_BLOCK_RADIUS_W+1)); 
+        //make_color(weightIJ, weightIJ, weightIJ, 0, &(d_dst1[imageW * iy + ix]) );
+        //d_dst1[imageW * iy + ix]=tex2D(tex2,x,y);
+    }
+#if 0
+    if(ix < imageW && iy < imageH)
+    {
+        //Normalized counter for the NLM weight threshold
+        float fCount = 0;
+        //Total sum of pixel weights
+        float sumWeights = 0;
+        //Result accumulator
+        float3 clr = {0, 0, 0};
+
+        //Cycle through NLM window, surrounding (x, y) texel
+        for(float i = -NLM_WINDOW_RADIUS; i <= NLM_WINDOW_RADIUS; i++)
+            for(float j = -NLM_WINDOW_RADIUS; j <= NLM_WINDOW_RADIUS; j++)
+            {
+                //Find color distance from (x, y) to (x + j, y + i)
+                float weightIJ = 0;
+                for(float n = -NLM_BLOCK_RADIUS; n <= NLM_BLOCK_RADIUS; n++)
+                    for(float m = -NLM_BLOCK_RADIUS; m <= NLM_BLOCK_RADIUS; m++)
+                        weightIJ += vecLen(
+                            tex2D(tex1, x + j + m, y + i + n),
+                            tex2D(tex2,     x + m,     y + n)
+                        );
+
+                //Derive final weight from color and geometric distance
+                weightIJ     = __expf( -(weightIJ * Noise + (i * i + j * j) * INV_NLM_WINDOW_AREA) );
+
+                //Accumulate (x + j, y + i) texel color with computed weight
+                float4 clrIJ;
+                toFloat4(tex2D(tex1, x + j, y + i), &clrIJ);
+                clr.x       += clrIJ.x * weightIJ;
+                clr.y       += clrIJ.y * weightIJ;
+                clr.z       += clrIJ.z * weightIJ;
+
+                //Sum of weights for color normalization to [0..1] range
+                sumWeights  += weightIJ;
+
+                //Update weight counter, if NLM weight for current window texel
+                //exceeds the weight threshold
+                fCount      += (weightIJ > NLM_WEIGHT_THRESHOLD) ? INV_NLM_WINDOW_AREA : 0;
+            }
+        //Normalize result color by sum of weights
+        sumWeights = 1.0f / sumWeights;
+        clr.x *= sumWeights;
+        clr.y *= sumWeights;
+        clr.z *= sumWeights;
+
+        //Choose LERP quotent basing on how many texels
+        //within the NLM window exceeded the weight threshold
+        float lerpQ = (fCount > NLM_LERP_THRESHOLD) ? lerpC : 1.0f - lerpC;
+
+        //Write final result to global memory
+        float4 clr00;
+        toFloat4(tex2D(tex1, x, y), &clr00);
+        clr.x = lerpf(clr.x, clr00.x, lerpQ);
+        clr.y = lerpf(clr.y, clr00.y, lerpQ);
+        clr.z = lerpf(clr.z, clr00.z, lerpQ);
+        make_color(clr.x, clr.y, clr.z, 0, &(d_dst1[imageW * iy + ix]) );
+    }
+#endif
+}
+
 
 __global__
 void mixRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
@@ -100,6 +282,26 @@ void mixRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imag
     }
 }
 
+
+__global__
+void resize( uchar4 *d_dst,int dstW, int dstH, int srcW, int srcH )
+{
+    // Position in dest image
+    const int ix = blockDim.x * blockIdx.x + threadIdx.x;
+    const int iy = blockDim.y * blockIdx.y + threadIdx.y;
+
+    // Position in src image
+    if(ix < dstW && iy < dstH)
+    {
+        const float ratioW = float(srcW)/float(dstW);
+        const float ratioH = float(srcH)/float(dstH);
+        const float u = float(ix)*ratioW;
+        const float v = float(iy)*ratioH; 
+        const unsigned int pos = ix + iy*dstW;
+        d_dst[pos] = tex2D(tex1, u, v);
+    }
+}
+
 __global__
 void diffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
 {
@@ -116,7 +318,8 @@ void diffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int ima
         const float3 src2 =  make_float3( d_src2[posPix1].x, d_src2[posPix1].y, d_src2[posPix1].z );
 
         const float3 result = fabs(src1-src2);
-
+        
+        // TODO +127 ?
         const float R = (result.x+0.f);
         const float G = (result.y+0.f);
         const float B = (result.z+0.f);
@@ -470,23 +673,21 @@ cudaGray1ToRGBA( uchar4 *d_dst, unsigned char *d_src, int imageW, int imageH )
     cudaDeviceSynchronize();
 }
 
-
-
 extern "C"
-void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, double matrix[9] )
+void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, double *matrix )
 {
     size_t offset=0;
 
-	tex.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
-	tex.normalized = false; // Don't normalize texture coordinates
+	tex1.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
+	tex1.normalized = false; // Don't normalize texture coordinates
 	/* Clamping saves us some boundary checks */
-	tex.addressMode[0] = cudaAddressModeClamp;
-	tex.addressMode[1] = cudaAddressModeClamp;
-	tex.addressMode[2] = cudaAddressModeClamp;
+	tex1.addressMode[0] = cudaAddressModeClamp;
+	tex1.addressMode[1] = cudaAddressModeClamp;
+	tex1.addressMode[2] = cudaAddressModeClamp;
 
     // Bind texture reference to linear memory
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<uchar4>();
-    cudaBindTexture2D( &offset, tex, (uchar4*)d_src, channelDesc, imageW, imageH, imageW*4*sizeof(unsigned char) );
+    cudaBindTexture2D( &offset, tex1, (uchar4*)d_src, channelDesc, imageW, imageH, imageW*4*sizeof(unsigned char) );
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
@@ -504,9 +705,9 @@ void cudaWarpImage( uchar4 *d_dst, uchar4 *d_src, int imageW, int imageH, double
     cudaMalloc((void**)&d_matrix, sizeof(double)*9);
     cudaMemcpy(d_matrix, matrix, sizeof(double)*9, cudaMemcpyHostToDevice);
     cuWarpImage<<<grid, threads>>>( d_dst, imageW, imageH, d_matrix );
-    cudaFree(d_matrix);
     cudaDeviceSynchronize();
-    cudaUnbindTexture( tex );
+    cudaUnbindTexture( tex1 );
+    cudaFree(d_matrix);
 }
 
 extern "C"
@@ -520,13 +721,97 @@ void cudaDiffRGB( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int
 }
 
 extern "C"
-void cudaMix( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
+void cudaMix( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imagew, int imageh )
 {
+    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+    dim3 grid(iDivUp(imagew, BLOCKDIM_X), iDivUp(imageh, BLOCKDIM_Y));
+
+    mixRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imagew, imageh );
+    cudaDeviceSynchronize();
+}
+
+extern "C"
+void cudaVisualComfort( uchar4 *d_dst1, uchar4 *d_dst2, uchar4 *d_src1, uchar4 *d_src2, int imageW, int imageH )
+{
+    size_t offset=0;
+
+	tex1.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
+	tex1.normalized = false; // Don't normalize texture coordinates
+	/* Clamping saves us some boundary checks */
+	tex1.addressMode[0] = cudaAddressModeClamp;
+	tex1.addressMode[1] = cudaAddressModeClamp;
+	tex1.addressMode[2] = cudaAddressModeClamp;
+
+    // Bind texture reference to linear memory
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<uchar4>();
+    cudaBindTexture2D( &offset, tex1, (uchar4*)d_src1, channelDesc, imageW, imageH, imageW*4*sizeof(unsigned char) );
+
+	tex2.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
+	tex2.normalized = false; // Don't normalize texture coordinates
+	/* Clamping saves us some boundary checks */
+	tex2.addressMode[0] = cudaAddressModeClamp;
+	tex2.addressMode[1] = cudaAddressModeClamp;
+	tex2.addressMode[2] = cudaAddressModeClamp;
+
+    // Bind texture reference to linear memory
+    cudaBindTexture2D( &offset, tex2, (uchar4*)d_src2, channelDesc, imageW, imageH, imageW*4*sizeof(unsigned char) );
+   
     dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
-    mixRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imageW, imageH );
-    cudaThreadSynchronize();
+    visualComfort<<<grid, threads>>>( d_dst1, d_dst2, imageW, imageH);
+    cudaDeviceSynchronize();
+    cudaUnbindTexture( tex1 );
+    cudaUnbindTexture( tex2 );
+}
+
+extern "C"
+void cudaResize(uchar4 *d_dst, int dstW, int dstH, uchar4 *d_src, int srcW, int srcH)
+{
+    size_t offset=0;
+
+	tex1.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
+	tex1.normalized = false; // Don't normalize texture coordinates
+	/* Clamping saves us some boundary checks */
+	tex1.addressMode[0] = cudaAddressModeClamp;
+	tex1.addressMode[1] = cudaAddressModeClamp;
+	tex1.addressMode[2] = cudaAddressModeClamp;
+
+    // Bind texture reference to linear memory
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<uchar4>();
+    cudaBindTexture2D( &offset, tex1, (uchar4*)d_src, channelDesc, srcW, srcH, srcW*4*sizeof(unsigned char) );
+    checkLastError();
+    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+    dim3 grid(iDivUp(dstW, BLOCKDIM_X), iDivUp(dstH, BLOCKDIM_Y));
+
+    resize<<<grid, threads>>>( d_dst, dstW, dstH, srcW, srcH );
+    cudaDeviceSynchronize();
+    checkLastError();
+}
+
+// Box filtered image resize
+extern "C"
+void cudaResizeBox(uchar4 *d_dst, int dstW, int dstH, uchar4 *d_src, int srcW, int srcH)
+{
+    size_t offset=0;
+
+	tex1.filterMode = cudaFilterModePoint; // We don't use interpolation (interpo impossible with uchar)
+	tex1.normalized = false; // Don't normalize texture coordinates
+	/* Clamping saves us some boundary checks */
+	tex1.addressMode[0] = cudaAddressModeClamp;
+	tex1.addressMode[1] = cudaAddressModeClamp;
+	tex1.addressMode[2] = cudaAddressModeClamp;
+
+    // Bind texture reference to linear memory
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<uchar4>();
+    cudaBindTexture2D( &offset, tex1, (uchar4*)d_src, channelDesc, srcW, srcH, srcW*4*sizeof(unsigned char) );
+    checkLastError();
+    dim3 threads(BLOCKDIM_X, BLOCKDIM_Y);
+    dim3 grid(iDivUp(dstW, BLOCKDIM_X), iDivUp(dstH, BLOCKDIM_Y));
+
+    resize<<<grid, threads>>>( d_dst, dstW, dstH, srcW, srcH );
+    cudaDeviceSynchronize();
+    checkLastError();
 }
 
 extern "C"
@@ -536,7 +821,7 @@ void cudaAnaglyph( uchar4 *d_dst, uchar4 *d_src1, uchar4 *d_src2, int imageW, in
     dim3 grid(iDivUp(imageW, BLOCKDIM_X), iDivUp(imageH, BLOCKDIM_Y));
 
     anaglyphRGB<<<grid, threads>>>( d_dst, d_src1, d_src2, imageW, imageH );
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
 }
 
 extern "C"
