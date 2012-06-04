@@ -125,11 +125,11 @@ int main(int argc, char *argv[])
     // Create an analyzer
     StereoAnalyzer *analyzer = NULL;
     //if(po.m_useGPU)
-    //    analyzer = new HomographyAnalyzerGPU();
+        analyzer = new HomographyAnalyzerGPU();
     //else
     //    analyzer = new HomographyAnalyzerCPU();
     // Testing a new analyser
-    analyzer = new FMatrixAnalyzerCPU();
+    //analyzer = new FMatrixAnalyzerCPU();
 
     // Create a thread to run analysis on background
     // Launch analyser in background

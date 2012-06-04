@@ -86,10 +86,10 @@ __device__ float vecLen(uchar4 a, uchar4 b){
     return (bx*bx + by*by + bz*bz);
 }
 
-#define NLM_WINDOW_RADIUS_W   11
+#define NLM_WINDOW_RADIUS_W   10
 #define NLM_WINDOW_RADIUS_H   0
-#define NLM_BLOCK_RADIUS_W    3
-#define NLM_BLOCK_RADIUS_H    3
+#define NLM_BLOCK_RADIUS_W    1
+#define NLM_BLOCK_RADIUS_H    1
 #define NLM_WINDOW_AREA     ( (2 * NLM_WINDOW_RADIUS_H + 1) * (2 * NLM_WINDOW_RADIUS_W + 1) )
 #define INV_NLM_WINDOW_AREA ( 1.0f / (float)NLM_WINDOW_AREA )
 #define NLM_WEIGHT_THRESHOLD    0.10f
