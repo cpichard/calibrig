@@ -4,7 +4,7 @@
 
 #include "cv.h"
 #include "highgui.h"
-#include "Deformation.h"
+#include "AnalysisResult.h"
 #include "Monitor.h"
 
 // Store data used for a computation
@@ -29,8 +29,8 @@ public:
 
     virtual std::string infos()=0; // TODO draw infos CPU/GPU
 
-    // Deformation found
-    Deformation m_d;
+    // AnalysisResult found
+    AnalysisResult m_d;
 
     // Analysis infos;
     float m_thresholdUsed;

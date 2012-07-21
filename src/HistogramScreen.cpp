@@ -43,7 +43,7 @@ void HistogramScreen::draw()
 
     if(m_analysisResult)
     {
-        Deformation &d = m_analysisResult->m_d;
+        AnalysisResult &d = m_analysisResult->m_d;
         const float mid = ((float)d.s_histogramBinSize+1.0)*m_analysisResult->m_binWidth/2.f;
 
         // Vertical disparity

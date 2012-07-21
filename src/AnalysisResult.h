@@ -1,11 +1,13 @@
 #ifndef __DEFORMATION_H__
 #define __DEFORMATION_H__
 
-// TODO find a better name 
-//
-struct Deformation
+#include <string>
+/**
+ * The result of an analysis contains only the data we want to send to the rig
+ */
+struct AnalysisResult
 {
-    Deformation()
+    AnalysisResult()
     : m_succeed(false)
     , m_rot(0)
     , m_tx(0)
@@ -22,7 +24,7 @@ struct Deformation
             m_hdisp[i] = m_vdisp[i] = 0;
         }
     }
-    
+
     static const unsigned int s_histogramBinSize = 128;
 
     double m_h[9];
@@ -38,5 +40,13 @@ struct Deformation
     float m_vdisp[s_histogramBinSize]; // Vertical disparity histogram
     std::string m_mode;
 };
+
+// Function to convert values of analysis result to a formatted json string
+void makeResultReply                ( const AnalysisResult &, std::string & );
+void makeHistogramHorizontalReply   ( const AnalysisResult &, std::string & );
+void makeHistogramVerticalReply     ( const AnalysisResult &, std::string & );
+void makeHistogramReply             ( const AnalysisResult &, std::string & );
+void makeVersionReply               ( const AnalysisResult &, std::string & );
+// rig information void makeCameraReply                ( const AnalysisResult &, std::string &reply );
 
 #endif // __DEFORMATION_H__

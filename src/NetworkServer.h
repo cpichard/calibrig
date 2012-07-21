@@ -1,5 +1,5 @@
-#ifndef __RESULTSERVER_H__
-#define __RESULTSERVER_H__
+#ifndef __NETWORKSERVER_H__
+#define __NETWORKSERVER_H__
 
 
 #include <boost/asio.hpp>
@@ -18,409 +18,119 @@
 using namespace std;
 using namespace boost::algorithm;
 
-
-extern const char *version;
-
 using boost::asio::ip::tcp;
 
 namespace po = boost::program_options;
 
-template <typename ResultType>
+//
+template <typename StoredType>
 class LockDecorator
 {
 public:
+    // TODO : copy constructors+operator+
     LockDecorator(){}
     ~LockDecorator(){}
 
-    // Data
-    void set( const ResultType &d )
+    // Accessors
+    inline void set( const StoredType &d )
     {
         boost::lock_guard<boost::mutex> l(m_mutex);
         m_d = d;
     }
 
-    void get( ResultType &d )
+    inline void get( StoredType &d )
     {
         boost::lock_guard<boost::mutex> l(m_mutex);
         d = m_d;
     }
 
-    ResultType m_d;
+private:
+    StoredType m_d;
     boost::mutex m_mutex;
 };
 
+/**
+ * This is used to process the incoming messages from the network
+ */
+class MessageHandler
+{
+public:
+    MessageHandler( LockDecorator<AnalysisResult> &result
+                  , CommandStack &commandStack );
+    ~MessageHandler();
+
+    // Take the incoming message, process it a
+    bool process( const std::string &messageIn, std::string &messageOut );
+
+private:
+    LockDecorator<AnalysisResult>   &m_result;
+    CommandStack                    &m_commandStack;
+    LockDecorator<std::string>      m_cameraJson;
+};
 
 class TcpConnection : public boost::enable_shared_from_this<TcpConnection>
 {
 public:
-    typedef boost::shared_ptr<TcpConnection> pointer;
+    typedef boost::shared_ptr<TcpConnection> SharedPtr;
 
-    static pointer create( boost::asio::io_service &io_service, 
-                            LockDecorator<Deformation> &result, 
-                            LockDecorator<std::string> &cameraJson, CommandStack &commandStack  )
-    {
-        return pointer( new TcpConnection(io_service, result, cameraJson, commandStack ));
-    }
+    static SharedPtr create( boost::asio::io_service &io_service
+                           , MessageHandler &msgHandler );
 
-    ~TcpConnection()
-    {}
+    ~TcpConnection();
 
-    tcp::socket & socket(){ return m_socket; }
+    tcp::socket & socket();
 
-    void start()
-    {
-        //std::cout << "connection started" << std::endl;
+    void start();
+    void close();
 
-        // Read the command
-        boost::asio::async_read_until(socket(),
-            m_msgReceived,
-            '\n',
-            boost::bind(
-              &TcpConnection::handleReadCommand, shared_from_this(),
-              boost::asio::placeholders::error));
-
-    }
-
-    void handleReadCommand(const boost::system::error_code& error)
-    {
-        //std::cout << "handleReadCommand" << std::endl;
-        if( !error )
-        {
-            // Get message from streambuffer
-            std::istream is(&m_msgReceived);
-            std::string msgReceived;
-            std::getline( is, msgReceived);
-
-            //std::cout << msgReceived << std::endl;
-            if( msgReceived.find("GETR") != string::npos )
-            {
-                //std::cout << "Find GETR" << std::endl;
-                makeResultReply();
-                sendMessage();
-            }
-            else if( msgReceived.find("THRES")!= string::npos )
-            {
-                std::string com;
-                int value = 0;
-                std::stringstream ss(msgReceived);
-                ss >> com; // THRES
-                ss >> value;
-
-                if(!ss.fail())
-                {
-                    m_commandStack.pushCommand("ANALYSER","OCVTHRESHOLD", value );
-                }
-            }
-            else if( msgReceived.find("MAXPOINTS")!= string::npos )
-            {
-                std::string com;
-                int value = 0;
-                std::stringstream ss(msgReceived);
-                ss >> com; // MAXNBPOINTS
-                ss >> value;
-
-                if(!ss.fail())
-                {
-                    m_commandStack.pushCommand("ANALYSER","MAXPOINTS", value );
-                }
-            }
-            else if( msgReceived.find("SCREEN")!= string::npos )
-            {
-                std::string com;
-                int value = 0;
-                std::stringstream ss(msgReceived);
-                ss >> com; // SCREEN NUMBER
-                ss >> value;
-
-                if(!ss.fail())
-                {
-                    m_commandStack.pushCommand("MAIN","SCREEN", value );
-                }
-            }
-            // Histogram range  
-            else if( msgReceived.find("HRANGE")!= string::npos )
-            {
-                std::string com;
-                int value = 0;
-                std::stringstream ss(msgReceived);
-                ss >> com; 
-                ss >> value;
-
-                if(!ss.fail())
-                {
-                    m_commandStack.pushCommand("ANALYSER","HISTOGRAMRANGE", value );
-                }
-            }
-            else if( msgReceived.find("EXIT") != string::npos)
-            {
-                m_commandStack.pushCommand("MAIN", "EXIT" );
-            }
-            else if( msgReceived.find("CLOSE") != string::npos)
-            {
-                // Close connection
-                return;
-            }
-            else if( msgReceived.find("GETHH") != string::npos)
-            {
-                makeHistogramHorizontalReply();
-                sendMessage();
-            }
-            else if( msgReceived.find("GETHV") != string::npos)
-            {
-                makeHistogramVerticalReply();
-                sendMessage();
-            }
-            else if( msgReceived.find("GETH") != string::npos)
-            {
-                makeHistogramReply();
-                sendMessage();
-            }
-            else if( msgReceived.find("SNAPSHOT") != string::npos)
-            {
-                m_commandStack.pushCommand("MAIN", "SNAPSHOT");    
-            }
-            else if( msgReceived.find("VERSION") != string::npos)
-            {
-                makeVersionReply();
-                sendMessage();  
-            }
-            else if( msgReceived.find("SETCAM ") != string::npos)
-            {
-                std::string com;
-                std::string cam;
-                std::stringstream ss(msgReceived);
-                ss >> com;
-                // Read the rest of the line
-                std::getline(ss, cam);
-                trim(cam);
-                m_cameraJson.set(cam);
-            }
-            else if( msgReceived.find("GETCAM") != string::npos )
-            {
-                makeCameraReply();
-                sendMessage();  
-            }
-            else
-            {
-                m_msgToSend = "{\"help\" : \"unknown command, use GETR, GETH, GETHV, GETHH, MAXPOINTS <value>,THRES <value>, HRANGE <value>, SNAPSHOT, VERSION, CLOSE or EXIT\"}\n";
-                sendMessage();
-            }
-        
-            // Read next message
-            boost::asio::async_read_until(socket(),
-                m_msgReceived,
-                '\n',
-                boost::bind(
-                  &TcpConnection::handleReadCommand, shared_from_this(),
-                  boost::asio::placeholders::error));
-        }
-        else
-        {
-            // todo close connection properly
-            std::cout << "error in NetworkServer.h" << std::endl;
-        }
-    }
-
-    // Create a reply
-    void makeResultReply( )
-    {
-        Deformation d;
-        m_result.get( d );
-        std::stringstream str;
-        str << "{ \"tx\":" << d.m_tx;
-        str << ", \"ty\":" << d.m_ty;
-        str << ", \"rot\":" << d.m_rot;
-        str << ", \"scale\":" << d.m_scale;
-        str << ", \"pts_r\":" << d.m_nbPtsRight;
-        str << ", \"pts_l\":" << d.m_nbPtsLeft;
-        str << ", \"matches\":" << d.m_nbMatches;
-        str << ", \"success\":" << ( d.m_succeed ? "true" : "false") ;
-        str << " }\n";
-        m_msgToSend = str.str();
-    }
-
-
-    // Histogram horizontal 
-    void makeHistogramHorizontalReply( )
-    {
-        Deformation d;
-        m_result.get( d );
-        std::stringstream str;
-        str << "{ \"hdisp\":[" << d.m_hdisp[0];
-        for( unsigned int i=1; i< d.s_histogramBinSize; i++)
-        {
-            str << ", " << d.m_hdisp[i];
-        }
-        str << "] }\n";
-
-        m_msgToSend = str.str();
-    }
-
-    // Histogram vertical
-    void makeHistogramVerticalReply( )
-    {
-        Deformation d;
-        m_result.get( d );
-        std::stringstream str;
-        str << "{ \"vdisp\":[" << d.m_vdisp[0];
-        for( unsigned int i=1; i< d.s_histogramBinSize; i++)
-        {
-            str << ", " << d.m_vdisp[i];
-        }
-        str << "] }\n";
-
-        m_msgToSend = str.str();
-    }
-
-    // Create a reply
-    void makeHistogramReply( )
-    {
-        Deformation d;
-        m_result.get( d );
-        std::stringstream str;
-        str << "{ \"hdisp\":[" << d.m_hdisp[0];
-        for( unsigned int i=1; i< d.s_histogramBinSize; i++)
-        {
-            str << ", " << d.m_hdisp[i];
-        }
-        str << "], \"vdisp\":[" << d.m_vdisp[0];
-        for( unsigned int i=1; i< d.s_histogramBinSize; i++)
-        {
-            str << ", " << d.m_vdisp[i];
-        }
-
-        str << "] }\n";
-
-        m_msgToSend = str.str();
-    }
-
-    void makeVersionReply()
-    {
-        Deformation d;
-        m_result.get( d );
-        std::stringstream str;
-        str << "{ \"version\":\"" << std::string(version) << "\", \"mode\":\"" << d.m_mode << "\" }\n";
-        m_msgToSend = str.str();
-    }
-
-    void makeCameraReply()
-    {
-        std::string cam;
-        m_cameraJson.get(cam);
-        std::stringstream str;
-        str << cam << std::endl;
-        m_msgToSend = str.str();
-    }
-
-    void sendMessage()
-    {
-        boost::asio::async_write( m_socket, boost::asio::buffer(m_msgToSend),
-            boost::bind( &TcpConnection::handleWrite, shared_from_this(),
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred));
-    }
-
-    void close(){ m_socket.close();}
+    void handleReadCommand(const boost::system::error_code& error);
+    void sendMessage();
 
 private:
-    TcpConnection( boost::asio::io_service &io_service, 
-                    LockDecorator<Deformation> &result, 
-                    LockDecorator<std::string> &cameraJson, 
-                    CommandStack &commandStack  )
-    : m_socket(io_service)
-    , m_result(result)
-    , m_cameraJson(cameraJson)
-    , m_commandStack(commandStack)
-    {}
+    TcpConnection( boost::asio::io_service &io_service
+                 , MessageHandler &msgHandler );
 
-    void handleWrite( const boost::system::error_code &, size_t){}
+    void handleWrite( const boost::system::error_code &, size_t );
 
-    tcp::socket m_socket;
-    std::string m_msgToSend;
-    boost::asio::streambuf m_msgReceived;
-
-    LockDecorator<Deformation> &m_result;
-    LockDecorator<std::string> &m_cameraJson;
-    CommandStack &m_commandStack;
+    tcp::socket             m_socket;
+    MessageHandler          &m_msgHandler;
+    std::string             m_msgToSend;
+    boost::asio::streambuf  m_msgReceived;
 };
 
 class TcpServer
 {
 public:
-    TcpServer( boost::asio::io_service &io, LockDecorator<Deformation> &result, 
-               LockDecorator<std::string> &cameraJson, CommandStack &commandStack, unsigned int serverPort )
-    : m_acceptor(io, tcp::endpoint(tcp::v4(),serverPort))
-    , m_result(result)
-    , m_cameraJson(cameraJson)
-    , m_commandStack(commandStack)
-    {
-        startAccept();
-    }
-    void set( std::string &message )
-    {}
+    TcpServer( boost::asio::io_service &io
+             , MessageHandler &msgHandler
+             , unsigned int serverPort );
 
 private:
-    void startAccept()
-    {
-        TcpConnection::pointer newConnection = TcpConnection::create(m_acceptor.io_service(), m_result, m_cameraJson, m_commandStack );
-        m_acceptor.async_accept(
-            newConnection->socket(),
-            boost::bind(    &TcpServer::handleAccept ,
-                            this,
-                            newConnection,
-                            boost::asio::placeholders::error
-            )
-        );
-    }
+    void startAccept();
+    void handleAccept( TcpConnection::SharedPtr newConnection, const boost::system::error_code &error );
 
-    void handleAccept( TcpConnection::pointer newConnection, const boost::system::error_code &error )
-    {
-        if(!error)
-        {
-            newConnection->start();
-            startAccept();
-        }
-    }
-
-    tcp::acceptor m_acceptor;
-    LockDecorator<Deformation> &m_result;
-    LockDecorator<std::string> &m_cameraJson;
-    CommandStack &m_commandStack;
+    tcp::acceptor               m_acceptor;
+    MessageHandler              &m_msgHandler;
 };
 
+/** Network TCP and UDP server
+*/
 class NetworkServer
 {
 public:
-    NetworkServer(LockDecorator<Deformation> &result, CommandStack &commandStack, unsigned int serverPort)
-    :m_result(result), m_cameraJson(), m_commandStack(commandStack), m_serverPort(serverPort)
-    {
-        m_cameraJson.set("{}");
-    }
+    NetworkServer( MessageHandler &msgHandler
+                 , unsigned int tcpServerPort
+                 , unsigned int udpServerPort );
 
-    void operator()()
-    {
-        // Asio service
-        try
-        {
-            TcpServer server( m_io, m_result, m_cameraJson, m_commandStack, m_serverPort );
-            m_io.run();
-        }
-        catch(std::exception &e)
-        {
-            std::cerr << e.what() << std::endl;
-        }
-    }
+    void operator()();
+    inline void stop(){ m_io.stop(); }
 
-    inline void stop(){m_io.stop();}
-
-    TcpServer   *m_server;
-    LockDecorator<Deformation> &m_result;
-    LockDecorator<std::string> m_cameraJson;
-    CommandStack &m_commandStack;
-    std::string m_message;
-    boost::asio::io_service m_io;
-    unsigned int m_serverPort;
+private:
+    MessageHandler              &m_msgHandler;
+    boost::asio::io_service     m_io;
+    unsigned int                m_tcpServerPort;
+    unsigned int                m_udpServerPort;
 };
 
 
-#endif//__RESULTSERVER_H__
+#endif//__NETWORKSERVER_H__

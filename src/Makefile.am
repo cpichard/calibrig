@@ -7,7 +7,7 @@ AM_CPPFLAGS = -g @SDI_CFLAGS@ @OpenCV_CFLAGS@ @CUDA_CFLAGS@ @CUDATOOLKIT_CFLAGS@
 
 bin_PROGRAMS=calibrig
 calibrig_LDADD = @SDI_LIBS@ @OpenCV_LIBS@ @CUDA_LIBS@ @CUDATOOLKIT_LIBS@ @CUDPPTOOLKIT_LIBS@ @BOOST_LIBS@ @TBB_LIBS@
-calibrig_LDFLAGS = -Wl,-rpath,./ 
+calibrig_LDFLAGS = -Wl,-rpath,./
 calibrig_SOURCES = \
 main.cpp \
 NvSDIin.h NvSDIin.cpp \
@@ -24,7 +24,8 @@ Utils.h Utils.cpp\
 ImageGL.h ImageGL.cpp\
 Grabber.h Grabber.cpp\
 MainWindow.h MainWindow.cpp\
-Deformation.h\
+AnalysisResult.h\
+AnalysisResult.cpp\
 AnalyzerFunctor.h\
 AnalyzerFunctorCPU.h\
 NetworkServer.h\
