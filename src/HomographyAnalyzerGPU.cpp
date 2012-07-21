@@ -108,7 +108,7 @@ void HomographyAnalyzerGPU::analyse()
     cudaDeviceSynchronize();
     m_leftImageIsNew = m_rightImageIsNew = false;
 
-    Deformation &d = m_result->m_d;
+    AnalysisResult &d = m_result->m_d;
     d.m_nbMatches = m_result->m_leftMatchedPts.size();
     d.m_nbPtsRight = NbElements(m_rightPoints);
     d.m_nbPtsLeft = NbElements(m_leftPoints);
@@ -145,7 +145,6 @@ void HomographyAnalyzerGPU::analyse()
             d.m_nbPtsLeft = NbElements(m_leftPoints);
             d.m_nbMatches = m_result->m_leftMatchedPts.size();
             computeDisparity();
-            
             m_result->m_thresholdUsed = m_sentThreshold; 
         }
     }
@@ -253,7 +252,7 @@ void HomographyAnalyzerGPU::computeDisparity()
 {
     if( m_result && Width(m_imgLeft) > 0 )
     {
-        Deformation &d = m_result->m_d;
+        AnalysisResult &d = m_result->m_d;
 
         for( int i = 0; i < d.s_histogramBinSize; i++ )
         {

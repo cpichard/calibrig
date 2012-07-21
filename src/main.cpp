@@ -57,10 +57,11 @@ int main(int argc, char *argv[])
     // Parse command line for program options
     ProgramOptions po(argc, argv, version);
 
-    // Network server variables 
-    LockDecorator<Deformation> sharedResult;
+    // Network server variables
+    LockDecorator<AnalysisResult> sharedResult;
     CommandStack commandStack;
-    NetworkServer server(sharedResult, commandStack, po.m_serverPort);
+    MessageHandler msgHandler(sharedResult, commandStack);
+    NetworkServer server(msgHandler, po.m_serverPort, po.m_serverPort+1);
     boost::thread t(boost::ref(server));
 
     // Graphic system, X11, GPUs, GLX, basic window manager
@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
     // TODO : fill matrix and add matrix to warp function
     float matrix[9];
 #endif
-    
+
     // Create an analyzer
     StereoAnalyzer *analyzer = NULL;
     //if(po.m_useGPU)
@@ -145,7 +146,7 @@ int main(int argc, char *argv[])
     // Variable needed in the loop
     ComputationData *result = NULL;
     Command currentCommand;
-    
+
     // Main XWindows event loop
     XEvent event;
     bool bNotDone = true;
@@ -230,7 +231,7 @@ int main(int argc, char *argv[])
                   {
                     if(event.xclient.data.l[0] == gs.m_wmDeleteMessage)
                     {
-                        bNotDone = false;    
+                        bNotDone = false;
                     }
                   }
                   break;
@@ -240,10 +241,10 @@ int main(int argc, char *argv[])
             } // switch
         }
 
-        // Flush all received commands 
+        // Flush all received commands
         while( commandStack.popCommand(currentCommand) == true )
         {
-            if( currentCommand.m_dest == "MAIN" 
+            if( currentCommand.m_dest == "MAIN"
             && currentCommand.m_action == "EXIT" )
             {
                 bNotDone = false;
@@ -252,7 +253,7 @@ int main(int argc, char *argv[])
             else if( currentCommand.m_dest == "MAIN"
             && currentCommand.m_action == "SNAPSHOT")
             {
-                saveImages = true;    
+                saveImages = true;
             }
 
             else if( currentCommand.m_dest == "MAIN"
@@ -282,7 +283,7 @@ int main(int argc, char *argv[])
                 default:
                     // do nothing
                     break;
-                } 
+                }
             }
 
             // Redirect command for analyser
@@ -354,13 +355,13 @@ int main(int argc, char *argv[])
                 {
                     analyzer->analyse();
                 }
-                
+
             }
 
             // Next frame
             activeScreen->nextFrame();
         }
-        
+
         activeScreen->draw();
 
         // Swap buffer
