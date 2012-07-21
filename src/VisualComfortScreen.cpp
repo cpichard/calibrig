@@ -78,7 +78,7 @@ void VisualComfortScreen::nextFrame()
     streamsToRGB( m_stream1, m_leftImg  );
     streamsToRGB( m_stream2, m_rightImg );
 
-    Deformation &d = m_analysisResult->m_d;
+    AnalysisResult &d = m_analysisResult->m_d;
     //warpImage(m_leftImg, m_warpedLeftImg, d.m_h2);
     //warpImage(m_rightImg, m_warpedRightImg, d.m_h1);
     //resizeImageGL(m_warpedLeftImg, m_downRezImgRight);
