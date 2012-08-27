@@ -42,9 +42,16 @@
 #include "NetworkServer.h"
 #include "CommandStack.h"
 
+#include <boost/program_options/option.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/parsers.hpp>
+
+namespace po = boost::program_options;
+
 #define TEST 0
 
-const char *version = "05042012";
+const char *version = "27082012";
 
 int main(int argc, char *argv[])
 {

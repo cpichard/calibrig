@@ -63,5 +63,11 @@ HistogramScreen.cpp\
 AnaglyphScreen.h\
 AnaglyphScreen.cpp\
 MixScreen.h\
-MixScreen.cpp
+MixScreen.cpp\
+TCPServer.h\
+TCPServer.cpp\
+UDPServer.h\
+UDPServer.cpp\
+MessageHandler.h\
+MessageHandler.cpp
 
