@@ -1,5 +1,6 @@
 #include "UDPServer.h"
 
+
 UdpServer::UdpServer( boost::asio::io_service &io
                     , MessageHandler &msgHandler
                     , unsigned int serverPort )
@@ -10,7 +11,6 @@ UdpServer::UdpServer( boost::asio::io_service &io
 }
 
 void UdpServer::startReceive() {
-    std::cout << "Start receiving" << std::endl;
     m_socket.async_receive_from
         ( boost::asio::buffer(m_receiveBuffer)
         , m_remoteEndpoint
@@ -25,10 +25,10 @@ void UdpServer::handleReceive(const boost::system::error_code& error, size_t msg
 
     if (!error || error == boost::asio::error::message_size)
     {
-        if (msgSize>128) {
-            std::cout << "ERROR TODO" << std::endl;
+        if (msgSize >= s_msgMaxSize) {
+            std::cout << "UDPServer: message received is too large, not processing" << std::endl;
+            startReceive();
         }
-        std::cout << "receiving" << std::endl;
 
         std::string msgReceived(m_receiveBuffer.data());
         std::string msgProcessed;
@@ -45,7 +45,5 @@ void UdpServer::handleReceive(const boost::system::error_code& error, size_t msg
 }
 
 void UdpServer::handleSend(boost::shared_ptr<std::string> msgToSend)
-{
-    std::cout << "Handle send reached" << std::endl;
-}
+{}
 

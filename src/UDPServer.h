@@ -25,10 +25,12 @@ private:
     void handleReceive(const boost::system::error_code& error, size_t msgSize);
     void handleSend(boost::shared_ptr<std::string> msgToSend);
 
-    udp::socket             m_socket;
-    udp::endpoint           m_remoteEndpoint;
-    boost::array<char, 128> m_receiveBuffer;
-    MessageHandler          &m_msgHandler;
+    static const int s_msgMaxSize=512;
+
+    udp::socket                         m_socket;
+    udp::endpoint                       m_remoteEndpoint;
+    boost::array<char, s_msgMaxSize>    m_receiveBuffer;
+    MessageHandler                      &m_msgHandler;
 };
 
 #endif//__UDPSERVER_H__                                             
