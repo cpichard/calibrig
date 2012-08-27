@@ -61,13 +61,16 @@ int main(int argc, char *argv[])
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
     std::cout << "under certain conditions; " << std::endl;
 
-    unsigned int serverPort = 8090;
+    unsigned int tcpPort = 8090;
+    unsigned int udpPort = 8091;
     bool useGPU = false;
     bool noThread = false;
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
-        ("port", po::value<unsigned int>(), "server port")
+        ("port", po::value<unsigned int>(), "tcp server port - deprecated, use --tcp")
+        ("tcp", po::value<unsigned int>(), "tcp server port")
+        ("udp", po::value<unsigned int>(), "udp server port")
         ("gpu", "enable gpu computing")
         ("nothread", "remove multi threading - for debugging purposes")
     ;
@@ -86,11 +89,18 @@ int main(int argc, char *argv[])
 
         if( vm.count("port") )
         {
-            serverPort = vm["port"].as<unsigned int>();
+            tcpPort = vm["port"].as<unsigned int>();
+            std::cout << "WARNING Option --port is deprecated, please use --tcp instead" << std::endl;
         }
-        else
+
+        if( vm.count("tcp") )
         {
-            std::cout << "Using port " << serverPort << std::endl;
+            tcpPort = vm["tcp"].as<unsigned int>();
+        }
+
+        if( vm.count("udp") )
+        {
+            udpPort = vm["udp"].as<unsigned int>();
         }
 
         if( vm.count("gpu") )
@@ -101,6 +111,9 @@ int main(int argc, char *argv[])
         {
             noThread = true;
         }
+
+        std::cout << "Using tcp port " << tcpPort << std::endl;
+        std::cout << "Using udp port " << udpPort << std::endl;
     }
 
     catch(std::exception &e)
@@ -119,7 +132,7 @@ int main(int argc, char *argv[])
     Command currentCommand;
     LockDecorator<AnalysisResult> sharedResult;
     MessageHandler msgHandler(sharedResult, commandStack);
-    NetworkServer server(msgHandler, serverPort, serverPort+1);
+    NetworkServer server(msgHandler, tcpPort, udpPort);
     boost::thread t(boost::ref(server));
 
     // Default window size
