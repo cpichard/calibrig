@@ -13,7 +13,7 @@
 
 using boost::asio::ip::udp;
 
-class UdpServer 
+class UdpServer
 {
 public:
     UdpServer( boost::asio::io_service &io
@@ -21,7 +21,6 @@ public:
              , unsigned int serverPort );
 
 private:
-    
     void startReceive();
     void handleReceive(const boost::system::error_code& error, size_t msgSize);
     void handleSend(boost::shared_ptr<std::string> msgToSend);
