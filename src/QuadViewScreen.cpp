@@ -72,7 +72,7 @@ void QuadViewScreen::draw()
     if( m_analysisResult )
     {
         // TODO : use functions instead of d
-        Deformation &d = m_analysisResult->m_d;
+        AnalysisResult &d = m_analysisResult->m_d;
         // Result values
         std::stringstream strstr;
         strstr << std::setprecision(4) << std::right << std::fixed

@@ -439,7 +439,7 @@ void StereoAnalyzerCPU::analyse()
     normalise( resultTmp->m_rightKeypoints, m_imgWidth, m_imgHeight );
     normalise( resultTmp->m_leftKeypoints,  m_imgWidth, m_imgHeight );
 
-    Deformation &d = resultTmp->m_d;
+    AnalysisResult &d = resultTmp->m_d;
     d.m_nbPtsRight = resultTmp->m_rightKeypoints->total;
     d.m_nbPtsLeft = resultTmp->m_leftKeypoints->total;
     d.m_nbMatches = 0;
@@ -483,7 +483,7 @@ void StereoAnalyzerCPU::computeDisparity()
 {
     if( m_result )
     {
-        Deformation &d = m_result->m_d;
+        AnalysisResult &d = m_result->m_d;
 
         for( int i = 0; i < d.s_histogramBinSize; i++ )
         {

@@ -83,7 +83,7 @@ void DiffScreen::draw()
 
     if( m_analysisResult )
     {
-        Deformation &d = m_analysisResult->m_d;
+        AnalysisResult &d = m_analysisResult->m_d;
         // Result values
         std::stringstream strstr;
         strstr << std::setprecision(4) << std::right << std::fixed

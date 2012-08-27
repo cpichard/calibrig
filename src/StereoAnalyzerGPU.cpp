@@ -127,7 +127,7 @@ void StereoAnalyzerGPU::analyse()
         m_matchMutex.unlock();
         return;
     }
-    Deformation &d = m_result->m_d;
+    AnalysisResult &d = m_result->m_d;
     assert( m_leftMatchedPts.size() == m_rightMatchedPts.size() );
     d.m_nbMatches = m_leftMatchedPts.size();
     d.m_nbPtsRight = NbElements(m_rightPoints);
@@ -165,13 +165,13 @@ void StereoAnalyzerGPU::analyse()
             d.m_nbPtsLeft = NbElements(m_leftPoints);
             d.m_nbMatches = m_leftMatchedPts.size();
             computeDisparity();
-            
+
             m_result->m_leftMatchedPts = m_leftMatchedPts;
             m_result->m_rightMatchedPts = m_rightMatchedPts;
-            m_result->m_thresholdUsed = m_sentThreshold; 
+            m_result->m_thresholdUsed = m_sentThreshold;
         }
     }
-    
+
     m_matchMutex.unlock();
 }
 
@@ -267,7 +267,7 @@ void StereoAnalyzerGPU::computeDisparity()
 {
     if( m_result && Width(m_imgLeft) > 0 )
     {
-        Deformation &d = m_result->m_d;
+        AnalysisResult &d = m_result->m_d;
 
         for( int i = 0; i < d.s_histogramBinSize; i++ )
         {

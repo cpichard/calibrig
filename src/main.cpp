@@ -44,9 +44,16 @@
 #include "NetworkServer.h"
 #include "CommandStack.h"
 
+#include <boost/program_options/option.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/parsers.hpp>
+
+namespace po = boost::program_options;
+
 #define TEST 0
 
-const char *version = "05042012";
+const char *version = "27082012";
 
 int main(int argc, char *argv[])
 {
@@ -56,13 +63,16 @@ int main(int argc, char *argv[])
     std::cout << "This is free software, and you are welcome to redistribute it" << std::endl;
     std::cout << "under certain conditions; " << std::endl;
 
-    unsigned int serverPort = 8090;
+    unsigned int tcpPort = 8090;
+    unsigned int udpPort = 8091;
     bool useGPU = false;
     bool noThread = false;
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
-        ("port", po::value<unsigned int>(), "server port")
+        ("port", po::value<unsigned int>(), "tcp server port - deprecated, use --tcp")
+        ("tcp", po::value<unsigned int>(), "tcp server port")
+        ("udp", po::value<unsigned int>(), "udp server port")
         ("gpu", "enable gpu computing")
         ("nothread", "remove multi threading - for debugging purposes")
     ;
@@ -81,11 +91,18 @@ int main(int argc, char *argv[])
 
         if( vm.count("port") )
         {
-            serverPort = vm["port"].as<unsigned int>();
+            tcpPort = vm["port"].as<unsigned int>();
+            std::cout << "WARNING Option --port is deprecated, please use --tcp instead" << std::endl;
         }
-        else
+
+        if( vm.count("tcp") )
         {
-            std::cout << "Using port " << serverPort << std::endl;
+            tcpPort = vm["tcp"].as<unsigned int>();
+        }
+
+        if( vm.count("udp") )
+        {
+            udpPort = vm["udp"].as<unsigned int>();
         }
 
         if( vm.count("gpu") )
@@ -96,6 +113,9 @@ int main(int argc, char *argv[])
         {
             noThread = true;
         }
+
+        std::cout << "Using tcp port " << tcpPort << std::endl;
+        std::cout << "Using udp port " << udpPort << std::endl;
     }
 
     catch(std::exception &e)
@@ -112,13 +132,14 @@ int main(int argc, char *argv[])
     // Value for the server
     CommandStack commandStack;
     Command currentCommand;
-    LockDecorator<Deformation> sharedResult;
-    NetworkServer server(sharedResult,commandStack,serverPort);
+    LockDecorator<AnalysisResult> sharedResult;
+    MessageHandler msgHandler(sharedResult, commandStack);
+    NetworkServer server(msgHandler, tcpPort, udpPort);
     boost::thread t(boost::ref(server));
-    
-    // Default window size 
+
+    // Default window size
     const UInt2 winSize(1024,768);
-    
+
     // Connect to X server
     Display *dpy = XOpenDisplay(NULL);
     if( dpy == NULL )
@@ -155,7 +176,7 @@ int main(int argc, char *argv[])
 
     // Grab the first GPU for now for DVP
     HGPUNV *gpu = &gpuList[0];
-    
+
     // Create window
     GLXContext ctx;
     Window mainWin = createMainWindow( dpy, ctx, gpu->deviceXScreen, Width(winSize), Height(winSize) );
@@ -210,7 +231,7 @@ int main(int argc, char *argv[])
     float *d_matrix; // device matrix
     cudaMalloc((void**)&d_matrix, sizeof(float)*9);
 #endif
-    
+
     // Create an analyzer
     StereoAnalyzer *analyzer = NULL;
     if(useGPU)
@@ -228,7 +249,7 @@ int main(int argc, char *argv[])
         analysisThread = new boost::thread( boost::ref(runAnalysis) );
     }
     ComputationData *result = NULL;
-    
+
     // Main XWindows event loop
     XEvent event;
     bool bNotDone = true;
@@ -261,17 +282,17 @@ int main(int argc, char *argv[])
                     {
                     }
                     // Key_1
-                    if( kpe->keycode == 10 ) 
+                    if( kpe->keycode == 10 )
                     {
                         activeScreen = screen1;
                     }
                     // Key_2
-                    if( kpe->keycode == 11 ) 
+                    if( kpe->keycode == 11 )
                     {
                         activeScreen = screen2;
                     }
                     // Key_3
-                    if( kpe->keycode == 12 ) 
+                    if( kpe->keycode == 12 )
                     {
                         activeScreen = screen3;
                     }
@@ -305,7 +326,7 @@ int main(int argc, char *argv[])
                   {
                     if(event.xclient.data.l[0] == wmDeleteMessage)
                     {
-                        bNotDone = false;    
+                        bNotDone = false;
                     }
                   }
                   break;
@@ -315,10 +336,10 @@ int main(int argc, char *argv[])
             } // switch
         }
 
-        // Flush all received commands 
+        // Flush all received commands
         while( commandStack.popCommand(currentCommand) == true )
         {
-            if( currentCommand.m_dest == "MAIN" 
+            if( currentCommand.m_dest == "MAIN"
             && currentCommand.m_action == "EXIT" )
             {
                 bNotDone = false;
@@ -327,7 +348,7 @@ int main(int argc, char *argv[])
             else if( currentCommand.m_dest == "MAIN"
             && currentCommand.m_action == "SNAPSHOT")
             {
-                saveImages = true;    
+                saveImages = true;
             }
 
             else if( currentCommand.m_dest == "MAIN"
@@ -354,7 +375,7 @@ int main(int argc, char *argv[])
                 default:
                     // do nothing
                     break;
-                } 
+                }
             }
 
             // Redirect command for analyser
@@ -380,7 +401,7 @@ int main(int argc, char *argv[])
             if(saveImages)
             {
                 grabber.saveImages();
-                saveImages = false;    
+                saveImages = false;
             }
 
             if(analyzer->try_lock())
@@ -408,7 +429,6 @@ int main(int argc, char *argv[])
                 {
 
                     analyzer->updateLeftImageWithSDIVideo (grabber.stream1());
-                    
 
 #if TEST            // Transform image for tests
                     convertYCbYCrToY( grabber.stream2(), m_YTmp );
@@ -431,13 +451,13 @@ int main(int argc, char *argv[])
                 {
                     analyzer->analyse();
                 }
-                
+
             }
 
             // Next frame
             activeScreen->nextFrame();
         }
-        
+
         activeScreen->draw();
 
         // Swap buffer
