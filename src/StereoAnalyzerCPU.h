@@ -69,6 +69,9 @@ private:
     // Tmp buffer used to copy raw image (YcrYcb) to memory
     char *m_tmpBuf;
 
+    // Histogram range
+    int m_histoRange;
+
     // TESTING PURPOSE
     CvMat *m_warpMatrix;
     CvMat *m_toNormMatrix;

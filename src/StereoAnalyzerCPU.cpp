@@ -38,6 +38,7 @@ StereoAnalyzerCPU::StereoAnalyzerCPU( unsigned int nbChannelsInSDIVideo )
 , m_warpMatrix(NULL)
 , m_result(NULL)
 , m_maxNumberOfPoints(8000)
+, m_histoRange(20)
 {
     m_warpMatrix = cvCreateMat(2,3,CV_64FC1);
     m_toNormMatrix = cvCreateMat(3,3,CV_64FC1);
@@ -154,6 +155,10 @@ void StereoAnalyzerCPU::acceptCommand( const Command &command )
     {
         // value 0 to 100
         m_surfThreshold = command.m_value;// < 0 ? 10 : ( (command.m_value > 100 ) ? 10000 : command.m_value * 100);
+    }
+    if( command.m_action == "HISTOGRAMRANGE")
+    {
+        m_histoRange = command.m_value;
     }
     if( command.m_action == "MAXPOINTS" )
     {
@@ -496,7 +501,7 @@ void StereoAnalyzerCPU::computeDisparity()
             const float distV = r->pt.y - l->pt.y;
 
             // TODO : range of the histogram
-            const float range = 20.f/1920.f; // 20 pixels wide
+            const float range = float(m_histoRange)/float(m_imgWidth); 
             int indexH = (int)( 0.5 + ((distH + 0.5*range)/range)*(float)d.s_histogramBinSize);
             int indexV = (int)( 0.5 + ((distV + 0.5*range)/range)*(float)d.s_histogramBinSize);
 

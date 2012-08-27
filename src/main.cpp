@@ -35,6 +35,8 @@
 #include "QuadViewScreen.h"
 #include "DiffScreen.h"
 #include "HistogramScreen.h"
+#include "AnaglyphScreen.h"
+#include "MixScreen.h"
 #include "Utils.h"
 #include "Grabber.h"
 #include "MainWindow.h"
@@ -141,7 +143,6 @@ int main(int argc, char *argv[])
         SUCCESS_INFO( "System checked" );
     }
 
-
     // Scan the systems for GPUs
     HGPUNV gpuList[MAX_GPUS];
     int	num_gpus = ScanHW( dpy, gpuList );
@@ -175,7 +176,9 @@ int main(int argc, char *argv[])
     // Screens
     QuadViewScreen  *screen1 = new QuadViewScreen( dpy, winSize );
     DiffScreen      *screen2 = new DiffScreen( dpy, winSize );
-    HistogramScreen *screen3 = new HistogramScreen( dpy, winSize );
+    AnaglyphScreen  *screen3 = new AnaglyphScreen( dpy, winSize );
+    MixScreen       *screen4 = new MixScreen( dpy, winSize );
+    HistogramScreen *screen5 = new HistogramScreen( dpy, winSize );
     ScreenLayout    *activeScreen = NULL;
     activeScreen = screen1;
 
@@ -185,6 +188,9 @@ int main(int argc, char *argv[])
     {
         screen1->resizeImage(grabber.videoSize());
         screen2->resizeImage(grabber.videoSize());
+        screen3->resizeImage(grabber.videoSize());
+        screen4->resizeImage(grabber.videoSize());
+        screen5->resizeImage(grabber.videoSize());
 
         // Set capture handle to all screens
         activeScreen->setVideoStreams( grabber.stream1(), grabber.stream2() );
@@ -269,6 +275,16 @@ int main(int argc, char *argv[])
                     {
                         activeScreen = screen3;
                     }
+                    // Key_4
+                    if( kpe->keycode == 13 ) 
+                    {
+                        activeScreen = screen4;
+                    }
+                    // Key_5
+                    if( kpe->keycode == 14 ) 
+                    {
+                        activeScreen = screen5;
+                    }
                     //std::cout << "KeyPress = " << kpe->keycode << std::endl;
 
                   }
@@ -328,6 +344,12 @@ int main(int argc, char *argv[])
                     break;
                 case 3:
                     activeScreen = screen3;
+                    break;
+                case 4:
+                    activeScreen = screen4;
+                    break;
+                case 5:
+                    activeScreen = screen5;
                     break;
                 default:
                     // do nothing
@@ -445,6 +467,8 @@ int main(int argc, char *argv[])
     delete screen1;
     delete screen2;
     delete screen3;
+    delete screen4;
+    delete screen5;
 
     // TODO : free OpenGL memory
     // Test in CPU

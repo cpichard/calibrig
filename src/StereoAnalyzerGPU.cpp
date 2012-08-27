@@ -280,8 +280,8 @@ void StereoAnalyzerGPU::computeDisparity()
             const float distH = m_rightMatchedPts[i].x - m_leftMatchedPts[i].x;
             const float distV = m_rightMatchedPts[i].y - m_leftMatchedPts[i].y;
 
-            // TODO : range of the histogram
-            const float range = float(m_histoRange)/Width(m_imgLeft); // 20 pixels wide
+            // range of the histogram
+            const float range = float(m_histoRange)/float(Width(m_imgLeft)); 
             int indexH = (int)( 0.5 + ((distH + 0.5*range)/range)*(float)d.s_histogramBinSize);
             int indexV = (int)( 0.5 + ((distV + 0.5*range)/range)*(float)d.s_histogramBinSize);
 
